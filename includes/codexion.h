@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/13 09:29:21 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/08/21 13:35:37 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/08/21 15:06:48 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,6 +52,7 @@ typedef enum e_status
     DEBUGGING_COMPLETED,
     REFACTORING,
     REFACTORING_COMPLETED,
+    ALL_COMPILES_COMPLETED,
     AVAILABLE,
     PLUGGED,
     COOLING_DOWN
