@@ -6,17 +6,17 @@
 #    By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/08/17 11:38:13 by jbarreir          #+#    #+#              #
-#    Updated: 2026/08/18 12:44:31 by jbarreir         ###   ########.fr        #
+#    Updated: 2026/08/21 11:45:31 by jbarreir         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 NAME		= codexion
-CFLAGS		= -Wall -Wextra -Werror
+CFLAGS		= -Wall -Wextra -Werror -g -pthread -I includes
 CC			= cc
 HEADER		= codexion.h
 
 # Sustituir con finales
-SRC			= $(wildcard *.c)
+SRC			= $(wildcard */*.c) $(wildcard */*/*.c)
 
 OBJ			= $(SRC:.c=.o)
 
