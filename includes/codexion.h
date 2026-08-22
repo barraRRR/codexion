@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/13 09:29:21 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/08/21 15:06:48 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/08/22 11:35:52 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,8 @@
 // *** LIMITS ***
 # define MAX_CODERS 512
 # define MAX_TIME 9999999999
+# define SLEEP_INTERVAL 1000
+# define MONITOR_SLEEP 1000
 
 // *** STATE MACHINE AND ERROR MESSAGES ***
 typedef enum e_status
@@ -80,13 +82,12 @@ typedef enum e_scheduler
 
 struct s_dongle
 {
+    t_simulation            *sim;
     int                     id;
     pthread_mutex_t         lock;
     pthread_cond_t          cond;
     t_status                status;
-    t_scheduler             scheduler;
     t_coder                 *queue[2];
-    long long               dongle_cooldown;
     long long               last_compile_time;
 };
 
@@ -96,6 +97,7 @@ struct s_coder
     pthread_t               thread;
     int                     id;
     t_status                status;
+    pthread_mutex_t         lock_status;
     struct s_coder          *coder_right;
     t_dongle                *usb_right;
     struct s_coder          *coder_left;
@@ -107,7 +109,6 @@ struct s_monitor
 {
     t_simulation            *sim;
     pthread_t               thread;
-    bool                    burnout;
 };
 
 struct s_simulation
@@ -122,11 +123,12 @@ struct s_simulation
     long long               time_to_compile;
     long long               time_to_debug;
     long long               time_to_refactor;
-    int                     number_of_compiles_required;
+    int                     compiles_required;
     long long               dongle_cooldown;
     int                     completed_compiles;
     pthread_mutex_t         lock_compiles;
     pthread_mutex_t         lock_log;
+    pthread_mutex_t         lock_status;
     t_scheduler             scheduler;
 };
 
@@ -147,5 +149,20 @@ void            edf_scheduler(t_coder **queue, t_coder *coder);
 t_coder         *dequeue(t_coder **queue);
 void            enqueue_coder(t_coder *coder);
 void            *monitor_routine(void *arg);
+void            vigilant_sleep(t_coder *coder, long long sleeping_time);
+bool            check_completion(t_coder *coder);
+
+void update_cooldown(t_dongle *usb, struct timeval *start);
+bool usb_access(t_dongle *usb, t_coder *coder, struct timeval *start);
+bool both_usb_access(t_coder *coder);
+void lock_dongles_in_order(t_coder *coder);
+void unlock_dongles(t_coder *coder);
+void take_dongle(t_coder *coder);
+
+void compile_init(t_coder *coder);
+void debug_init(t_coder *coder);
+void refactor_init(t_coder *coder);
+
+bool safe_status(t_coder *coder, t_status status);
 
 #endif

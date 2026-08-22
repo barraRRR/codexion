@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/12 10:38:31 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/08/21 13:34:09 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/08/22 11:24:55 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,18 +35,53 @@ long long   timer(struct timeval *start)
 
 void    print_log(t_coder *coder, long long timestamp)
 {
+    bool            printable;
+
+    
+    pthread_mutex_lock(&coder->lock_status);
     pthread_mutex_lock(&coder->sim->lock_log);
-    if (coder->status == TAKING_DONGLE)
-        printf("%lld %d has taken a dongle\n", timestamp, coder->id);
-    else if (coder->status == COMPILING)
-        printf("%lld %d is compiling\n", timestamp, coder->id);
-    else if (coder->status == DEBUGGING)
-        printf("%lld %d is debugging\n", timestamp, coder->id);
-    else if (coder->status == REFACTORING)
-        printf("%lld %d is refactoring\n", timestamp, coder->id);
-    else if (coder->status == BURNOUT)
-        printf("%lld %d burned out\n", timestamp, coder->id);
+    if (check_completion(coder))
+        printable = false;
     else
-        printf("%lld %d undefined beheaviour", timestamp, coder->id);
+        printable = true;
+    if (coder->status == TAKING_DONGLE && printable)
+    printf("%lld %d has taken a dongle\n", timestamp, coder->id);
+    else if (coder->status == COMPILING && printable)
+        printf("%lld %d is compiling\n", timestamp, coder->id);
+    else if (coder->status == DEBUGGING && printable)
+        printf("%lld %d is debugging\n", timestamp, coder->id);
+    else if (coder->status == REFACTORING && printable)
+        printf("%lld %d is refactoring\n", timestamp, coder->id);
+    else if (coder->status == BURNOUT && printable)
+        printf("%lld %d burned out\n", timestamp, coder->id);
+    pthread_mutex_unlock(&coder->lock_status);
     pthread_mutex_unlock(&coder->sim->lock_log);
+}
+
+bool    check_completion(t_coder *coder)
+{
+    pthread_mutex_lock(&coder->sim->lock_status);
+    if (coder->sim->status == COMPILING_COMPLETED)
+    {
+        pthread_mutex_unlock(&coder->sim->lock_status);
+        return (true);
+    }
+    pthread_mutex_unlock(&coder->sim->lock_status);
+    return (false);
+}
+    
+void    vigilant_sleep(t_coder *coder, long long sleeping_time)
+{
+    long long           n_cycles;
+    long long           rest;
+    
+    n_cycles = sleeping_time / SLEEP_INTERVAL;
+    rest = sleeping_time % SLEEP_INTERVAL;
+    while (n_cycles--)
+    {
+        usleep(SLEEP_INTERVAL);
+        if (check_completion(coder))
+            return ;
+    }
+    usleep(rest);
 }

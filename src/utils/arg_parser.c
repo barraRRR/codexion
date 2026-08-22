@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/18 13:22:11 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/08/21 12:53:30 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/08/22 10:07:12 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,7 +56,7 @@ int parse_rules(t_simulation *sim, int argc, char **argv)
     sim->time_to_compile = arr[2];
     sim->time_to_debug = arr[3];
     sim->time_to_refactor = arr[4];
-    sim->number_of_compiles_required = arr[5];
+    sim->compiles_required = arr[5];
     sim->dongle_cooldown = arr[6];
     sim->completed_compiles = 0;
     if (strcmp(argv[8], "fifo") == 0)
@@ -75,6 +75,6 @@ void print_status(t_simulation sim)
     printf("time_to_compile              = %lld\n", sim.time_to_compile);
     printf("time_to_debug                = %lld\n", sim.time_to_debug);
     printf("time_to_refactor             = %lld\n", sim.time_to_refactor);
-    printf("number_of_compiles_required  = %d\n", sim.number_of_compiles_required);
+    printf("compiles_required            = %d\n", sim.compiles_required);
     printf("dongle_cooldown              = %lld\n", sim.dongle_cooldown);
 }

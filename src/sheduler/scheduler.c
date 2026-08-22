@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/20 10:45:52 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/08/21 12:53:15 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/08/22 11:37:40 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,7 +45,7 @@ t_coder *dequeue(t_coder **queue)
 
 void    enqueue_coder(t_coder *coder)
 {
-    if (coder->usb_right->scheduler == FIFO)
+    if (coder->sim->scheduler == FIFO)
     {
         fifo_scheduler(coder->usb_right->queue, coder);
         fifo_scheduler(coder->usb_left->queue, coder);

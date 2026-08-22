@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/19 10:55:55 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/08/21 12:57:09 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/08/22 10:55:52 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,6 +38,8 @@ t_coder *init_coder(t_simulation *sim, int id)
     coder->coder_left = NULL;
     coder->usb_right = NULL;
     coder->status = CODER_INIT;
+    if (pthread_mutex_init(&coder->lock_status, NULL))
+        return (NULL);
     return (coder);
 }
 

@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/19 13:09:10 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/08/21 13:26:12 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/08/21 19:52:38 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,7 @@ int    init_threads(t_simulation *sim)
 
     pthread_mutex_init(&sim->lock_compiles, NULL);    // necesita protección?
     pthread_mutex_init(&sim->lock_log, NULL);    // necesita protección?
+    pthread_mutex_init(&sim->lock_status, NULL);    // necesita protección?
     i = 0;
     while (i < sim->number_of_coders)
     {
