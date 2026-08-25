@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/19 10:55:55 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/08/24 18:15:34 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/08/25 13:11:32 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,6 +37,7 @@ t_coder *init_coder(t_simulation *sim, int id)
     coder->id = id + 1;
     coder->usb_right = NULL;
     coder->status = CODER_INIT;
+    coder->completed_compiles = 0;
     coder->last_compile_time = 0;
     if (pthread_mutex_init(&coder->lock, NULL))
         return (NULL);
@@ -106,6 +107,7 @@ t_status    init_coworking(t_simulation *sim)
     sim->hub[i] = NULL;
     sim->quantum[i] = NULL;
     link_coders_and_usbs(sim->hub, n);
+    pthread_mutex_init(&sim->log, NULL);
     return (SUCCESS);
 }
 

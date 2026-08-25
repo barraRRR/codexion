@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/13 09:29:21 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/08/25 11:06:58 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/08/25 12:16:02 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,7 +67,8 @@ typedef enum e_status
     AVAILABLE_BOTH,
     AVAILABLE_NONE,
     PLUGGED,
-    COOLING_DOWN
+    COOLING_DOWN,
+    SHUTDOWN_SIGNAL
 }   t_status;
 
 #define ARG_COUNT_ERR_MSG "Invalid number of arguments\n"
@@ -110,6 +111,7 @@ struct s_coder
     t_status                status;
     t_dongle                *usb_right;
     t_dongle                *usb_left;
+    int                     completed_compiles;
     long long               last_compile_time;
 };
 
@@ -135,7 +137,6 @@ struct s_simulation
     long long               time_to_refactor;
     long long               dongle_cooldown;
     int                     compiles_required;
-    int                     completed_compiles;
     t_scheduler             scheduler;
 };
 
@@ -157,7 +158,6 @@ t_coder         *dequeue(t_coder **queue);
 void            enqueue_coder(t_coder *coder);
 void            *monitor_routine(void *arg);
 void            vigilant_sleep(t_coder *coder, long long sleeping_time);
-bool            check_completion(t_coder *coder);
 
 void update_cooldown(t_dongle *usb, struct timeval *start);
 bool usb_access(t_dongle *usb, t_coder *coder);

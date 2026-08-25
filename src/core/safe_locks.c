@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/24 14:26:38 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/08/25 10:28:58 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/08/25 13:44:28 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,7 @@ bool    sim_lock_and_access(t_simulation *sim, t_status status, bool update)
         result = true;
     else
         result = false;
-    if (update)
+    if (update && sim->status != SHUTDOWN_SIGNAL)
         sim->status = status;
     pthread_mutex_unlock(&sim->lock);
     return (result);
@@ -36,7 +36,7 @@ bool    coder_lock_and_access(t_coder *coder, t_status status, bool update, bool
         result = true;
     else
         result = false;
-    if (update)
+    if (update && coder->status != BURNOUT)
         coder->status = status;
     if (unlock)
         pthread_mutex_unlock(&coder->lock);

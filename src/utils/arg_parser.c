@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/18 13:22:11 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/08/22 10:07:12 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/08/25 12:40:13 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,7 +60,6 @@ int parse_rules(t_simulation *sim, int argc, char **argv)
     sim->time_to_refactor = arr[4];
     sim->compiles_required = arr[5];
     sim->dongle_cooldown = arr[6];
-    sim->completed_compiles = 0;
     if (strcmp(argv[8], "fifo") == 0)
         sim->scheduler = FIFO;
     else if (strcmp(argv[8], "edf") == 0)

@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/12 10:38:31 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/08/24 17:46:46 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/08/25 12:43:35 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,16 +53,6 @@ void    print_log(t_coder *coder, long long timestamp, bool lock)
     fflush(stdout);
     pthread_mutex_unlock(&coder->sim->log);
 }
-
-bool    check_completion(t_coder *coder)
-{
-    bool                completed;
-
-    pthread_mutex_lock(&coder->sim->lock);
-    completed = (coder->sim->status == COMPILING_COMPLETED || coder->sim->status == BURNOUT);
-    pthread_mutex_unlock(&coder->sim->lock);
-    return (completed);
-}
     
 void    vigilant_sleep(t_coder *coder, long long sleeping_time)
 {
@@ -71,17 +61,15 @@ void    vigilant_sleep(t_coder *coder, long long sleeping_time)
     start = timer(&coder->sim->start);
     while ((timer(&coder->sim->start) - start) < sleeping_time)
     {
-        if (check_completion(coder))
+        pthread_mutex_lock(&coder->sim->lock);
+        if (coder->sim->status == SHUTDOWN_SIGNAL)
+        {
+            pthread_mutex_unlock(&coder->sim->lock);
             return ;
+        }
+        pthread_mutex_unlock(&coder->sim->lock);
         usleep(SLEEP_INTERVAL);
     }
-}
-
-void    add_simulation(t_simulation *sim)
-{
-    pthread_mutex_lock(&sim->lock);
-    (sim->completed_compiles)++;
-    pthread_mutex_unlock(&sim->lock);
 }
 
 bool    is_burnout(t_coder *coder)
