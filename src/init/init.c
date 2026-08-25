@@ -6,25 +6,11 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/19 10:55:55 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/08/25 13:11:32 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/08/25 17:53:52 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
-
-// Frees all coder pointers
-void	free_hub_memory(t_simulation *sim, int i)
-{
-	while (i >= 0)
-	{
-		free(sim->hub[i]);
-		free(sim->quantum[i]);
-		i--;
-	}
-	free(sim->hub);
-	free(sim->quantum);
-	sim->status = SUCCESS;
-}
 
 t_coder	*init_coder(t_simulation *sim, int id)
 {
@@ -33,13 +19,18 @@ t_coder	*init_coder(t_simulation *sim, int id)
 	coder = (t_coder *)malloc(sizeof(t_coder));
 	if (!coder)
 		return (NULL);
+	sim->n_coders++;
 	coder->sim = sim;
 	coder->id = id + 1;
 	coder->usb_right = NULL;
 	coder->status = CODER_INIT;
 	coder->completed_compiles = 0;
 	coder->last_compile_time = 0;
-	if (pthread_mutex_init(&coder->lock, NULL))
+	coder->has_thread = false;
+	coder->has_lock = false;
+	if (!pthread_mutex_init(&coder->lock, NULL))
+		coder->has_lock = true;
+	else
 		return (NULL);
 	return (coder);
 }
@@ -51,15 +42,20 @@ t_dongle	*init_usb(t_simulation *sim, int id)
 	usb = (t_dongle *)malloc(sizeof(t_dongle));
 	if (!usb)
 		return (NULL);
+	sim->n_dongles++;
 	usb->id = id + 1;
 	usb->sim = sim;
 	usb->status = AVAILABLE;
 	usb->queue[0] = NULL;
 	usb->queue[1] = NULL;
 	usb->last_compile_time = 0;
-	if (pthread_mutex_init(&usb->lock, NULL))
-		return (NULL);
-	if (pthread_cond_init(&usb->cond, NULL))
+	usb->has_lock = false;
+	usb->has_cond = false;
+	if (!pthread_mutex_init(&usb->lock, NULL))
+		usb->has_lock = true;
+	if (!pthread_cond_init(&usb->cond, NULL))
+		usb->has_cond = true;
+	if (usb->has_lock == false || usb->has_cond == false)
 		return (NULL);
 	return (usb);
 }
@@ -89,10 +85,12 @@ t_status	init_coworking(t_simulation *sim)
 	n = sim->number_of_coders;
 	sim->quantum = (t_dongle **)malloc(sizeof(t_dongle *) * (n + 1));
 	if (!sim->quantum)
-		return (MALLOC_ERR);
+		return (-1);
 	sim->hub = (t_coder **)malloc(sizeof(t_coder *) * (n + 1));
 	if (!sim->hub)
-		return (MALLOC_ERR);
+		return (-2);
+	sim->n_coders = 0;
+	sim->n_dongles = 0;
 	i = -1;
 	while (++i < n)
 	{

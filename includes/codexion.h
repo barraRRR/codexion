@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/13 09:29:21 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/08/25 12:16:02 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/08/25 17:39:45 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,6 +41,9 @@ typedef enum e_status
 	ARG_INT_ERR,
 	MIN_COD_ERR,
 	THREAD_ERR,
+	INIT_LOG_ERR,
+	INIT_SIM_LOCK_ERR,
+	INIT_MONITOR_ERR,
 	INIT_DONGLES,
 	INIT_DONGLES_ERR,
 	INIT_DONGLES_COMPLETED,
@@ -97,7 +100,9 @@ struct s_dongle
 {
 	t_simulation			*sim;
 	pthread_mutex_t			lock;
+	bool					has_lock;
 	pthread_cond_t			cond;
+	bool					has_cond;
 	int						id;
 	t_status				status;
 	t_coder					*queue[2];
@@ -108,7 +113,9 @@ struct s_coder
 {
 	t_simulation			*sim;
 	pthread_t				thread;
+	bool					has_thread;
 	pthread_mutex_t			lock;
+	bool					has_lock;
 	int						id;
 	t_status				status;
 	t_dongle				*usb_right;
@@ -121,12 +128,15 @@ struct s_monitor
 {
 	t_simulation			*sim;
 	pthread_t				thread;
+	bool					has_thread;
 };
 
 struct s_simulation
 {
 	pthread_mutex_t			lock;
+	bool					has_lock;
 	pthread_mutex_t			log;
+	bool					has_log;
 	t_coder					**hub;
 	t_dongle				**quantum;
 	t_monitor				monitor;
@@ -140,13 +150,15 @@ struct s_simulation
 	long long				dongle_cooldown;
 	int						compiles_required;
 	t_scheduler				scheduler;
+	int						n_coders;
+	int						n_dongles;
 };
 
 // *** PROTOTYPES ***
 long long		timer(struct timeval *start);
 int				parse_rules(t_simulation *sim, int argc, char **argv);
 t_status		init_coworking(t_simulation *sim);
-void			free_hub_memory(t_simulation *sim, int i);
+void			free_hub_memory(t_simulation *sim);
 t_status		init_threads(t_simulation *sim);
 void			join_threads_and_destroy_mutex_cond(t_simulation *sim);
 int				print_err(int error_code, char *err);

@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/13 09:29:04 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/08/25 13:12:35 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/08/25 17:41:03 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,13 +28,15 @@ int	main(int argc, char **argv)
 		return (sim.status);
 	sim.status = init_coworking(&sim);
 	if (sim.status == MALLOC_ERR)
+	{
+		free_hub_memory(&sim);
 		return (print_err(MALLOC_ERR, MALLOC_ERR_MSG));
+	}
 	if (init_threads(&sim) != INIT_SIMULATION)
 	{
-		free_hub_memory(&sim, sim.number_of_coders);
+		free_hub_memory(&sim);
 		return (print_err(INIT_THREADS_ERR, THREAD_ERR_MSG));
 	}
-	join_threads_and_destroy_mutex_cond(&sim);
-	free_hub_memory(&sim, sim.number_of_coders);
+	free_hub_memory(&sim);
 	return (sim.status);
 }
