@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/12 10:38:31 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/08/22 11:24:55 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/08/24 17:46:46 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,55 +33,58 @@ long long   timer(struct timeval *start)
     return (msec);
 }
 
-void    print_log(t_coder *coder, long long timestamp)
+void    print_log(t_coder *coder, long long timestamp, bool lock)
 {
-    bool            printable;
-
-    
-    pthread_mutex_lock(&coder->lock_status);
-    pthread_mutex_lock(&coder->sim->lock_log);
-    if (check_completion(coder))
-        printable = false;
-    else
-        printable = true;
-    if (coder->status == TAKING_DONGLE && printable)
-    printf("%lld %d has taken a dongle\n", timestamp, coder->id);
-    else if (coder->status == COMPILING && printable)
+    pthread_mutex_lock(&coder->sim->log);
+    if (lock)
+        pthread_mutex_lock(&coder->lock);
+    if (coder->status == TAKING_DONGLE)
+        printf("%lld %d has taken a dongle\n", timestamp, coder->id);
+    else if (coder->status == COMPILING)
         printf("%lld %d is compiling\n", timestamp, coder->id);
-    else if (coder->status == DEBUGGING && printable)
+    else if (coder->status == DEBUGGING)
         printf("%lld %d is debugging\n", timestamp, coder->id);
-    else if (coder->status == REFACTORING && printable)
+    else if (coder->status == REFACTORING)
         printf("%lld %d is refactoring\n", timestamp, coder->id);
-    else if (coder->status == BURNOUT && printable)
+    else if (coder->status == BURNOUT)
         printf("%lld %d burned out\n", timestamp, coder->id);
-    pthread_mutex_unlock(&coder->lock_status);
-    pthread_mutex_unlock(&coder->sim->lock_log);
+    if (lock)
+        pthread_mutex_unlock(&coder->lock);
+    fflush(stdout);
+    pthread_mutex_unlock(&coder->sim->log);
 }
 
 bool    check_completion(t_coder *coder)
 {
-    pthread_mutex_lock(&coder->sim->lock_status);
-    if (coder->sim->status == COMPILING_COMPLETED)
-    {
-        pthread_mutex_unlock(&coder->sim->lock_status);
-        return (true);
-    }
-    pthread_mutex_unlock(&coder->sim->lock_status);
-    return (false);
+    bool                completed;
+
+    pthread_mutex_lock(&coder->sim->lock);
+    completed = (coder->sim->status == COMPILING_COMPLETED || coder->sim->status == BURNOUT);
+    pthread_mutex_unlock(&coder->sim->lock);
+    return (completed);
 }
     
 void    vigilant_sleep(t_coder *coder, long long sleeping_time)
 {
-    long long           n_cycles;
-    long long           rest;
-    
-    n_cycles = sleeping_time / SLEEP_INTERVAL;
-    rest = sleeping_time % SLEEP_INTERVAL;
-    while (n_cycles--)
+    long long           start;
+
+    start = timer(&coder->sim->start);
+    while ((timer(&coder->sim->start) - start) < sleeping_time)
     {
-        usleep(SLEEP_INTERVAL);
         if (check_completion(coder))
             return ;
+        usleep(SLEEP_INTERVAL);
     }
-    usleep(rest);
+}
+
+void    add_simulation(t_simulation *sim)
+{
+    pthread_mutex_lock(&sim->lock);
+    (sim->completed_compiles)++;
+    pthread_mutex_unlock(&sim->lock);
+}
+
+bool    is_burnout(t_coder *coder)
+{
+    return (coder->status == BURNOUT);
 }

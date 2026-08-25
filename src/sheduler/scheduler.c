@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/20 10:45:52 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/08/22 11:37:40 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/08/24 18:07:53 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,6 +45,7 @@ t_coder *dequeue(t_coder **queue)
 
 void    enqueue_coder(t_coder *coder)
 {
+    lock_dongles_in_order(coder);
     if (coder->sim->scheduler == FIFO)
     {
         fifo_scheduler(coder->usb_right->queue, coder);
@@ -55,5 +56,7 @@ void    enqueue_coder(t_coder *coder)
         edf_scheduler(coder->usb_right->queue, coder);
         edf_scheduler(coder->usb_left->queue, coder);
     }
+    unlock_dongles(coder);
     coder->status = WAITING_DONGLE;
+    pthread_mutex_unlock(&coder->lock);
 }

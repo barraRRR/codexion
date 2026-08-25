@@ -51,6 +51,8 @@ int parse_rules(t_simulation *sim, int argc, char **argv)
     validator = int_validator(argv+1, arr);
     if (validator != SUCCESS)
         return (validator);
+    if (arr[0] < 2)
+        return (print_err(MIN_COD_ERR, MIN_COD_ERR_MSG));
     sim->number_of_coders = arr[0];
     sim->time_to_burnout = arr[1];
     sim->time_to_compile = arr[2];

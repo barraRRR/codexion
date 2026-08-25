@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/13 09:29:21 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/08/22 11:35:52 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/08/24 17:43:31 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,8 +40,14 @@ typedef enum e_status
     ARG_INT_ERR,
     MIN_COD_ERR,
     THREAD_ERR,
-    INIT_THREAD_COMPLETED,
-    INIT_THREAD_FAILED,
+    INIT_DONGLES,
+    INIT_DONGLES_ERR,
+    INIT_DONGLES_COMPLETED,
+    INIT_THREADS,
+    INIT_THREADS_COMPLETED,
+    INIT_THREADS_ERR,
+    INIT_SIMULATION,
+    INIT_SIMULATION_ERR,
     MALLOC_ERR,
     BURNOUT,
     FIFO_QUEUE,
@@ -83,9 +89,9 @@ typedef enum e_scheduler
 struct s_dongle
 {
     t_simulation            *sim;
-    int                     id;
     pthread_mutex_t         lock;
     pthread_cond_t          cond;
+    int                     id;
     t_status                status;
     t_coder                 *queue[2];
     long long               last_compile_time;
@@ -95,12 +101,10 @@ struct s_coder
 {
     t_simulation            *sim;
     pthread_t               thread;
+    pthread_mutex_t         lock;
     int                     id;
     t_status                status;
-    pthread_mutex_t         lock_status;
-    struct s_coder          *coder_right;
     t_dongle                *usb_right;
-    struct s_coder          *coder_left;
     t_dongle                *usb_left;
     long long               last_compile_time;
 };
@@ -113,22 +117,21 @@ struct s_monitor
 
 struct s_simulation
 {
-    t_monitor               monitor;
+    pthread_mutex_t         lock;
+    pthread_mutex_t         log;
     t_coder                 **hub;
     t_dongle                **quantum;
-    struct timeval          start;
+    t_monitor               monitor;
     t_status                status;
+    struct timeval          start;
     int                     number_of_coders;
     long long               time_to_burnout;
     long long               time_to_compile;
     long long               time_to_debug;
     long long               time_to_refactor;
-    int                     compiles_required;
     long long               dongle_cooldown;
+    int                     compiles_required;
     int                     completed_compiles;
-    pthread_mutex_t         lock_compiles;
-    pthread_mutex_t         lock_log;
-    pthread_mutex_t         lock_status;
     t_scheduler             scheduler;
 };
 
@@ -138,10 +141,10 @@ long long       timer(struct timeval *start);
 int             parse_rules(t_simulation *sim, int argc, char **argv);
 t_status        init_coworking(t_simulation *sim);
 void            free_hub_memory(t_simulation *sim, int i);
-int             init_threads(t_simulation *sim);
-void            join_threads(t_coder **hub, int number_of_coders);
+t_status             init_threads(t_simulation *sim);
+void join_threads_and_destroy_mutex_cond(t_simulation *sim);
 int             print_err(int error_code, char *err);
-void            print_log(t_coder *coder, long long timestamp);
+void            print_log(t_coder *coder, long long timestamp, bool lock);
 void            *quantum_compiler(void *arg);
 void            print_status(t_simulation sim);
 void            fifo_scheduler(t_coder **queue, t_coder *coder);
@@ -153,7 +156,7 @@ void            vigilant_sleep(t_coder *coder, long long sleeping_time);
 bool            check_completion(t_coder *coder);
 
 void update_cooldown(t_dongle *usb, struct timeval *start);
-bool usb_access(t_dongle *usb, t_coder *coder, struct timeval *start);
+bool usb_access(t_dongle *usb, t_coder *coder);
 bool both_usb_access(t_coder *coder);
 void lock_dongles_in_order(t_coder *coder);
 void unlock_dongles(t_coder *coder);
@@ -162,7 +165,14 @@ void take_dongle(t_coder *coder);
 void compile_init(t_coder *coder);
 void debug_init(t_coder *coder);
 void refactor_init(t_coder *coder);
+void *quantum_compiler(void *arg);
 
-bool safe_status(t_coder *coder, t_status status);
+bool sim_lock_and_access(t_simulation *sim, t_status status, bool update);
+bool coder_lock_and_access(t_coder *coder, t_status status, bool update, bool unlock);
+bool usb_lock_and_access(t_dongle *usb, t_status status, bool update);
+
+void add_simulation(t_simulation *sim);
+
+bool is_burnout(t_coder *coder);
 
 #endif
