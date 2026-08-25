@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/22 10:29:43 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/08/24 18:28:28 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/08/25 11:20:02 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,14 +14,27 @@
 
 void take_dongle(t_coder *coder)
 {
+    t_status            available;
+
     lock_dongles_in_order(coder);
-    while (!both_usb_access(coder))
+    available = both_usb_access(coder);
+    while (available != AVAILABLE_BOTH)
     {
         pthread_mutex_unlock(&coder->lock);
-        pthread_mutex_unlock(&coder->usb_left->lock);
-        pthread_cond_wait(&coder->usb_right->cond, &coder->usb_right->lock);
-        pthread_mutex_lock(&coder->usb_left->lock);
+        if (available == AVAILABLE_LEFT || available == AVAILABLE_NONE)
+        {
+            pthread_mutex_unlock(&coder->usb_left->lock);
+            pthread_cond_wait(&coder->usb_right->cond, &coder->usb_right->lock);
+            pthread_mutex_lock(&coder->usb_left->lock);
+        }
+        else if (available == AVAILABLE_RIGHT)
+        {
+            pthread_mutex_unlock(&coder->usb_right->lock);
+            pthread_cond_wait(&coder->usb_left->cond, &coder->usb_left->lock);
+            pthread_mutex_lock(&coder->usb_right->lock);
+        }
         pthread_mutex_lock(&coder->lock);
+        available = both_usb_access(coder);
         if (check_completion(coder) || is_burnout(coder))
         {
             unlock_dongles(coder);
@@ -89,34 +102,26 @@ void refactor_init(t_coder *coder)
 void *quantum_compiler(void *arg)
 {
     t_coder         *coder;
-    bool            running;
     t_status        status;
 
     coder = (t_coder *)arg;
-    running = true;
-    while (running)
+    while (true)
     {
         pthread_mutex_lock(&coder->sim->lock);
         status = coder->sim->status;
         pthread_mutex_unlock(&coder->sim->lock);
         if (status == BURNOUT || status == COMPILING_COMPLETED)
-        {
             break ;
-        }
         pthread_mutex_lock(&coder->lock);
         status = coder->status;
+        if (status == BURNOUT)
+            break ;
         if (status == CODER_INIT || status == REFACTORING_COMPLETED)
-        {
             enqueue_coder(coder);
-        }
         else if (status == WAITING_DONGLE)
-        {
             take_dongle(coder);
-        }
         else if (status == TAKING_DONGLE)
-        {
             compile_init(coder);
-        }
         else if (status == COMPILING_COMPLETED)
             debug_init(coder);
         else if (status == DEBUGGING_COMPLETED)

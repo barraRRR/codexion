@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/24 14:26:38 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/08/24 17:09:47 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/08/25 10:28:58 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,6 @@ bool    sim_lock_and_access(t_simulation *sim, t_status status, bool update)
 {
     bool                result;
 
-    // printf("Checking sim status\n");
     pthread_mutex_lock(&sim->lock);
     if (sim->status == status)
         result = true;
@@ -32,7 +31,6 @@ bool    coder_lock_and_access(t_coder *coder, t_status status, bool update, bool
 {
     bool                result;
     
-    // printf("Checking coder status\n");
     pthread_mutex_lock(&coder->lock);
     if (coder->status == status)
         result = true;

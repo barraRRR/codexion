@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/22 10:26:13 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/08/24 18:08:14 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/08/25 11:20:24 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,14 +23,21 @@ bool    usb_access(t_dongle *usb, t_coder *coder)
     return (true);
 }
 
-bool    both_usb_access(t_coder *coder)
+t_status    both_usb_access(t_coder *coder)
 {
     bool                right;
     bool                left;
 
     right = usb_access(coder->usb_right, coder);
     left = usb_access(coder->usb_left, coder);
-    return (right && left);
+    if (right && left)
+        return (AVAILABLE_BOTH);
+    else if (right)
+        return (AVAILABLE_RIGHT);
+    else if (left)
+        return (AVAILABLE_LEFT);
+    else
+        return (AVAILABLE_NONE);
 }   
 
 void    lock_dongles_in_order(t_coder *coder)

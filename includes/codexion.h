@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/13 09:29:21 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/08/24 17:43:31 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/08/25 11:06:58 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,6 +62,10 @@ typedef enum e_status
     REFACTORING_COMPLETED,
     ALL_COMPILES_COMPLETED,
     AVAILABLE,
+    AVAILABLE_LEFT,
+    AVAILABLE_RIGHT,
+    AVAILABLE_BOTH,
+    AVAILABLE_NONE,
     PLUGGED,
     COOLING_DOWN
 }   t_status;
@@ -157,7 +161,7 @@ bool            check_completion(t_coder *coder);
 
 void update_cooldown(t_dongle *usb, struct timeval *start);
 bool usb_access(t_dongle *usb, t_coder *coder);
-bool both_usb_access(t_coder *coder);
+t_status both_usb_access(t_coder *coder);
 void lock_dongles_in_order(t_coder *coder);
 void unlock_dongles(t_coder *coder);
 void take_dongle(t_coder *coder);
