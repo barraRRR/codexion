@@ -12,46 +12,50 @@
 
 #include "codexion.h"
 
-t_status    init_threads(t_simulation *sim)
+t_status	init_threads(t_simulation *sim)
 {
-    int             i;
+	int					i;
 
-    if (pthread_mutex_init(&sim->lock, NULL) != 0)
-        return (INIT_SIMULATION_ERR);
-    i = -1;
-    while (++i < sim->number_of_coders)
-        if (pthread_create(&sim->hub[i]->thread, NULL, quantum_compiler, sim->hub[i]))
-            return (INIT_THREADS_ERR);
-    if (pthread_create(&sim->monitor.thread, NULL, monitor_routine, &sim->monitor))
-        return (INIT_THREADS_ERR);
-    return (INIT_SIMULATION);
+	if (pthread_mutex_init(&sim->log, NULL))
+		return (INIT_SIMULATION_ERR);
+	if (pthread_mutex_init(&sim->lock, NULL))
+		return (INIT_SIMULATION_ERR);
+	i = -1;
+	while (++i < sim->number_of_coders)
+		if (pthread_create(&sim->hub[i]->thread, NULL, quantum_compiler,
+				sim->hub[i]))
+			return (INIT_THREADS_ERR);
+	if (pthread_create(&sim->monitor.thread, NULL, monitor_routine,
+			&sim->monitor))
+		return (INIT_THREADS_ERR);
+	return (INIT_SIMULATION);
 }
 
-void    join_threads_and_destroy_mutex_cond(t_simulation *sim)
+void	join_threads_and_destroy_mutex_cond(t_simulation *sim)
 {
-    int             i;
+	int					i;
 
-    if (!sim)
-        return ;
-    i = -1;
-    while (++i < sim->number_of_coders)
-    {
-        if (sim->hub && sim->hub[i])
-        {
-            pthread_join(sim->hub[i]->thread, NULL);
-            pthread_mutex_destroy(&sim->hub[i]->lock);
-        }
-    }
-    pthread_join(sim->monitor.thread, NULL);
-    i = -1;
-    while (++i < sim->number_of_coders)
-    {
-        if (sim->quantum && sim->quantum[i])
-        {
-            pthread_mutex_destroy(&sim->quantum[i]->lock);
-            pthread_cond_destroy(&sim->quantum[i]->cond);
-        }
-    }
-    pthread_mutex_destroy(&sim->lock);
-    pthread_mutex_destroy(&sim->log);
+	if (!sim)
+		return ;
+	i = -1;
+	while (++i < sim->number_of_coders)
+	{
+		if (sim->hub && sim->hub[i])
+		{
+			pthread_join(sim->hub[i]->thread, NULL);
+			pthread_mutex_destroy(&sim->hub[i]->lock);
+		}
+	}
+	pthread_join(sim->monitor.thread, NULL);
+	i = -1;
+	while (++i < sim->number_of_coders)
+	{
+		if (sim->quantum && sim->quantum[i])
+		{
+			pthread_mutex_destroy(&sim->quantum[i]->lock);
+			pthread_cond_destroy(&sim->quantum[i]->cond);
+		}
+	}
+	pthread_mutex_destroy(&sim->lock);
+	pthread_mutex_destroy(&sim->log);
 }

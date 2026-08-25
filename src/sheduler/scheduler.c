@@ -12,51 +12,51 @@
 
 #include "codexion.h"
 
-void    fifo_scheduler(t_coder **queue, t_coder *coder)
+void	fifo_scheduler(t_coder **queue, t_coder *coder)
 {
-    if (!queue[0])
-        queue[0] = coder;
-    else
-        queue[1] = coder;
+	if (!queue[0])
+		queue[0] = coder;
+	else
+		queue[1] = coder;
 }
 
-void    edf_scheduler(t_coder **queue, t_coder *coder)
+void	edf_scheduler(t_coder **queue, t_coder *coder)
 {
-    if (!queue[0])
-        queue[0] = coder;
-    else if (coder->sim->time_to_burnout < queue[0]->sim->time_to_burnout)
-    {
-        queue[1] = queue[0];
-        queue[0] = coder;
-    }
-    else
-        queue[1] = coder;
+	if (!queue[0])
+		queue[0] = coder;
+	else if (coder->sim->time_to_burnout < queue[0]->sim->time_to_burnout)
+	{
+		queue[1] = queue[0];
+		queue[0] = coder;
+	}
+	else
+		queue[1] = coder;
 }
 
-t_coder *dequeue(t_coder **queue)
+t_coder	*dequeue(t_coder **queue)
 {
-    t_coder             *ptr;
+	t_coder				*ptr;
 
-    ptr = queue[0];
-    queue[0] = queue[1];
-    queue[1] = NULL;
-    return (ptr);
+	ptr = queue[0];
+	queue[0] = queue[1];
+	queue[1] = NULL;
+	return (ptr);
 }
 
-void    enqueue_coder(t_coder *coder)
+void	enqueue_coder(t_coder *coder)
 {
-    lock_dongles_in_order(coder);
-    if (coder->sim->scheduler == FIFO)
-    {
-        fifo_scheduler(coder->usb_right->queue, coder);
-        fifo_scheduler(coder->usb_left->queue, coder);
-    }
-    else
-    {
-        edf_scheduler(coder->usb_right->queue, coder);
-        edf_scheduler(coder->usb_left->queue, coder);
-    }
-    unlock_dongles(coder);
-    coder->status = WAITING_DONGLE;
-    pthread_mutex_unlock(&coder->lock);
+	lock_dongles_in_order(coder);
+	if (coder->sim->scheduler == FIFO)
+	{
+		fifo_scheduler(coder->usb_right->queue, coder);
+		fifo_scheduler(coder->usb_left->queue, coder);
+	}
+	else
+	{
+		edf_scheduler(coder->usb_right->queue, coder);
+		edf_scheduler(coder->usb_left->queue, coder);
+	}
+	unlock_dongles(coder);
+	coder->status = WAITING_DONGLE;
+	pthread_mutex_unlock(&coder->lock);
 }
