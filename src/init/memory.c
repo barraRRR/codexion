@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/25 17:16:45 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/08/25 17:46:50 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/08/26 11:20:56 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,15 +39,15 @@ void	free_quantum(t_dongle **quantum, int i)
 }
 
 // Frees all coder pointers
-void free_hub_memory(t_simulation *sim)
+void	free_hub_memory(t_simulation *sim)
 {
+	if (sim->monitor.has_thread)
+		pthread_join(sim->monitor.thread, NULL);
 	free_coders(sim->hub, sim->n_coders);
 	free_quantum(sim->quantum, sim->n_dongles);
 	if (sim->has_lock)
 		pthread_mutex_destroy(&sim->lock);
 	if (sim->has_log)
 		pthread_mutex_destroy(&sim->log);
-	if (sim->monitor.has_thread)
-		pthread_join(sim->monitor.thread, NULL);
 	sim->status = SUCCESS;
 }

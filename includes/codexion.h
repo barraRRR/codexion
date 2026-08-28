@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/13 09:29:21 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/08/25 17:39:45 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/08/26 11:25:41 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -161,7 +161,8 @@ t_status		init_coworking(t_simulation *sim);
 void			free_hub_memory(t_simulation *sim);
 t_status		init_threads(t_simulation *sim);
 void			join_threads_and_destroy_mutex_cond(t_simulation *sim);
-int				print_err(int error_code, char *err);
+int				print_err(int error_code, char *err, t_simulation *sim,
+					bool free_mem);
 void			print_log(t_coder *coder, long long timestamp, bool lock);
 void			*quantum_compiler(void *arg);
 void			print_status(t_simulation sim);

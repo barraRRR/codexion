@@ -6,16 +6,18 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/12 10:38:31 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/08/25 12:43:35 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/08/26 11:26:14 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
 
-int	print_err(int error_code, char *err)
+int	print_err(int error_code, char *err, t_simulation *sim, bool free_mem)
 {
 	fprintf(stderr, "ERROR: ");
 	fprintf(stderr, "%s", err);
+	if (free_mem)
+		free_hub_memory(sim);
 	return (error_code);
 }
 

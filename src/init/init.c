@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/19 10:55:55 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/08/25 17:53:52 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/08/26 11:21:29 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -89,8 +89,6 @@ t_status	init_coworking(t_simulation *sim)
 	sim->hub = (t_coder **)malloc(sizeof(t_coder *) * (n + 1));
 	if (!sim->hub)
 		return (-2);
-	sim->n_coders = 0;
-	sim->n_dongles = 0;
 	i = -1;
 	while (++i < n)
 	{
