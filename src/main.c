@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/13 09:29:04 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/08/26 12:46:09 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/08/31 10:50:51 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,6 +25,8 @@ int	main(int argc, char **argv)
 	sim.monitor.sim = &sim;
 	sim.has_lock = false;
 	sim.has_log = false;
+	sim.hub = NULL;
+	sim.quantum = NULL;
 	sim.n_coders = 0;
 	sim.n_dongles = 0;
 	sim.status = parse_rules(&sim, argc, argv);
