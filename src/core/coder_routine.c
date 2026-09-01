@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/22 10:29:43 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/08/25 17:28:34 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/01 08:04:11 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -73,9 +73,9 @@ void	compile_init(t_coder *coder)
 	vigilant_sleep(coder, coder->sim->time_to_compile);
 	if (is_burnout(coder))
 		return ;
+	pthread_mutex_lock(&coder->lock);
 	lock_dongles_in_order(coder);
 	time = timer(&coder->sim->start);
-	pthread_mutex_lock(&coder->lock);
 	coder->last_compile_time = time;
 	coder->completed_compiles++;
 	if (coder->completed_compiles >= coder->sim->compiles_required)

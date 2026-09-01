@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/13 09:29:04 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/08/31 10:50:51 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/01 08:02:15 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,6 @@ int	main(int argc, char **argv)
 {
 	t_simulation		sim;
 
-	gettimeofday(&sim.start, NULL);
 	sim.monitor.sim = &sim;
 	sim.has_lock = false;
 	sim.has_log = false;
@@ -35,6 +34,7 @@ int	main(int argc, char **argv)
 	sim.status = init_coworking(&sim);
 	if (sim.status == MALLOC_ERR)
 		return (print_err(MALLOC_ERR, MALLOC_ERR_MSG, &sim, true));
+	gettimeofday(&sim.start, NULL);
 	if (init_threads(&sim) != INIT_SIMULATION)
  		return (print_err(INIT_THREADS_ERR, THREAD_ERR_MSG, &sim, true));
 	free_hub_memory(&sim);

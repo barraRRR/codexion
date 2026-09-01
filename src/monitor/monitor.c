@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/20 14:52:04 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/08/25 13:58:15 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/01 08:15:23 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,19 +38,23 @@ t_status	check_coder_status_and_cooldown(t_simulation *sim)
 
 	i = -1;
 	status = SHUTDOWN_SIGNAL;
+	now = timer(&sim->start);
 	while (++i < sim->number_of_coders)
 	{
 		pthread_mutex_lock(&sim->hub[i]->lock);
-		last_compile = sim->hub[i]->last_compile_time;
-		now = timer(&sim->start);
-		if (now >= last_compile + sim->time_to_burnout)
+		if (sim->hub[i]->status == ALL_COMPILES_COMPLETED)
+		{
+			pthread_mutex_unlock(&sim->hub[i]->lock);
+			continue ;
+		}
+		else if (now >= sim->hub[i]->last_compile_time + sim->time_to_burnout)
 		{
 			sim->hub[i]->status = BURNOUT;
 			print_log(sim->hub[i], now, false);
 			pthread_mutex_unlock(&sim->hub[i]->lock);
 			return (SHUTDOWN_SIGNAL);
 		}
-		if (sim->hub[i]->status != ALL_COMPILES_COMPLETED)
+		else if (sim->hub[i]->status != ALL_COMPILES_COMPLETED)
 			status = COMPILING;
 		pthread_mutex_unlock(&sim->hub[i]->lock);
 		update_cooldown(sim->quantum[i], &sim->start);
