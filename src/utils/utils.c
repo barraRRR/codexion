@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/12 10:38:31 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/08/26 11:26:14 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/01 07:56:08 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,9 +72,4 @@ void	vigilant_sleep(t_coder *coder, long long sleeping_time)
 		pthread_mutex_unlock(&coder->sim->lock);
 		usleep(SLEEP_INTERVAL);
 	}
-}
-
-bool	is_burnout(t_coder *coder)
-{
-	return (coder->status == BURNOUT);
 }
