@@ -12,11 +12,6 @@
 
 #include "codexion.h"
 
-/*
-TODO:
-- Liberar memoria correctamente en caso de fallo
-- Destruir solo los mutex e hilos que son creados
-*/
 int	main(int argc, char **argv)
 {
 	t_simulation		sim;

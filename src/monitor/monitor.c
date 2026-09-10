@@ -32,7 +32,6 @@ void	update_cooldown(t_dongle *usb, struct timeval *start)
 t_status	check_coder_status_and_cooldown(t_simulation *sim)
 {
 	int					i;
-	long long			last_compile;
 	long long			now;
 	t_status			status;
 

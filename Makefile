@@ -11,7 +11,7 @@
 # **************************************************************************** #
 
 NAME		= codexion
-CFLAGS		= -Wall -Wextra -Werror -g -pthread -I includes
+CFLAGS		= -D_DEFAULT_SOURCE -std=c89 -Wall -Wextra -Werror -g -pthread -I includes
 CC			= cc
 HEADER		= codexion.h
 

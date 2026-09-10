@@ -12,8 +12,9 @@
 
 #ifndef CODEXION_H
 # define CODEXION_H
+# define _POSIX_C_SOURCE 199309L
 
-// *** INCLUDES ***
+/* *** INCLUDES *** */
 # include <pthread.h>
 # include <stdio.h>
 # include <strings.h>
@@ -24,13 +25,13 @@
 # include <limits.h>
 # include <stdbool.h>
 
-// *** LIMITS ***
+/* *** LIMITS *** */
 # define MAX_CODERS 512
 # define MAX_TIME 9999999999
 # define SLEEP_INTERVAL 1000
 # define MONITOR_SLEEP 1000
 
-// *** STATE MACHINE AND ERROR MESSAGES ***
+/* *** STATE MACHINE AND ERROR MESSAGES *** */
 typedef enum e_status
 {
 	SUCCESS,
@@ -84,7 +85,7 @@ typedef enum e_status
 # define MALLOC_ERR_MSG "Malloc error\n"
 # define INIT_SIMULATION_ERR_MSG "Simulation mutex initialization error\n"
 
-// *** DATA STRUCTURES ***
+/* *** DATA STRUCTURES *** */
 typedef struct s_dongle		t_dongle;
 typedef struct s_coder		t_coder;
 typedef struct s_monitor	t_monitor;
@@ -154,7 +155,7 @@ struct s_simulation
 	int						n_dongles;
 };
 
-// *** PROTOTYPES ***
+/* *** PROTOTYPES *** */
 long long		timer(struct timeval *start);
 int				parse_rules(t_simulation *sim, int argc, char **argv);
 t_status		init_coworking(t_simulation *sim);

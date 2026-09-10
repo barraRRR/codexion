@@ -31,8 +31,9 @@ void	lock_and_wait(t_coder *coder, t_dongle *left, t_dongle *right,
 	pthread_mutex_unlock(&coder->lock);
 	pthread_mutex_unlock(available);
 	pthread_cond_wait(cond, locked);
-	pthread_mutex_lock(available);
+	pthread_mutex_unlock(locked);
 	pthread_mutex_lock(&coder->lock);
+	lock_dongles_in_order(coder);
 }
 
 void	take_dongle(t_coder *coder)
@@ -71,7 +72,7 @@ void	compile_init(t_coder *coder)
 	print_log(coder, timer(&coder->sim->start), false);
 	pthread_mutex_unlock(&coder->lock);
 	vigilant_sleep(coder, coder->sim->time_to_compile);
-	if (is_burnout(coder))
+	if (coder->status == BURNOUT)
 		return ;
 	pthread_mutex_lock(&coder->lock);
 	lock_dongles_in_order(coder);
