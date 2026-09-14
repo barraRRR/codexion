@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/22 10:29:43 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/14 15:39:03 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/14 16:31:34 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -106,7 +106,12 @@ void	debug_and_refactor(t_coder *coder)
 	vigilant_sleep(coder, coder->sim->time_to_refactor);
 	if (sim_lock_and_access(coder->sim, SHUTDOWN_SIGNAL, false))
 		return ;
-	coder_lock_and_access(coder, REFACTORING_COMPLETED, true, true);
+	pthread_mutex_lock(&coder->lock);
+	if (coder->completed_compiles >= coder->sim->compiles_required)
+		coder->status = ALL_COMPILES_COMPLETED;
+	else
+		coder->status = REFACTORING_COMPLETED;
+	pthread_mutex_unlock(&coder->lock);
 }
 
 void	*quantum_compiler(void *arg)
