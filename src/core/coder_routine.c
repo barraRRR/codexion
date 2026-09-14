@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/22 10:29:43 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/14 16:31:34 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/14 16:49:25 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -79,10 +79,7 @@ void	compile_init(t_coder *coder)
 	pthread_mutex_lock(&coder->lock);
 	lock_dongles_in_order(coder);
 	coder->completed_compiles++;
-	if (coder->completed_compiles >= coder->sim->compiles_required)
-		coder->status = ALL_COMPILES_COMPLETED;
-	else
-		coder->status = COMPILING_COMPLETED;
+	coder->status = COMPILING_COMPLETED;
 	pthread_mutex_unlock(&coder->lock);
 	coder->usb_right->last_compile_time = time;
 	coder->usb_left->last_compile_time = time;
