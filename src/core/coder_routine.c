@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/22 10:29:43 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/01 08:04:11 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/14 15:13:14 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,7 +72,7 @@ void	compile_init(t_coder *coder)
 	print_log(coder, timer(&coder->sim->start), false);
 	pthread_mutex_unlock(&coder->lock);
 	vigilant_sleep(coder, coder->sim->time_to_compile);
-	if (coder->status == BURNOUT)
+	if (safe_coder_status(coder, BURNOUT, true))
 		return ;
 	pthread_mutex_lock(&coder->lock);
 	lock_dongles_in_order(coder);
