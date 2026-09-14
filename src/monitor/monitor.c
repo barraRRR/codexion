@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/20 14:52:04 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/14 15:39:50 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/14 16:03:23 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,6 +40,7 @@ t_status	check_coder_status_and_cooldown(t_simulation *sim)
 	now = timer(&sim->start);
 	while (++i < sim->number_of_coders)
 	{
+		update_cooldown(sim->quantum[i], &sim->start);
 		pthread_mutex_lock(&sim->hub[i]->lock);
 		if (sim->hub[i]->status == ALL_COMPILES_COMPLETED)
 		{
@@ -56,7 +57,6 @@ t_status	check_coder_status_and_cooldown(t_simulation *sim)
 		else if (sim->hub[i]->status != ALL_COMPILES_COMPLETED)
 			status = COMPILING;
 		pthread_mutex_unlock(&sim->hub[i]->lock);
-		update_cooldown(sim->quantum[i], &sim->start);
 	}
 	return (status);
 }
