@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/19 10:55:55 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/08/31 10:54:21 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/14 15:23:58 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,7 @@ t_coder	*init_coder(t_simulation *sim, int id)
 	coder = (t_coder *)malloc(sizeof(t_coder));
 	if (!coder)
 		return (NULL);
+	sim->n_coders++;
 	coder->sim = sim;
 	coder->id = id + 1;
 	coder->usb_right = NULL;
@@ -30,7 +31,6 @@ t_coder	*init_coder(t_simulation *sim, int id)
 	if (!pthread_mutex_init(&coder->lock, NULL))
 	{
 		coder->has_lock = true;
-		sim->n_coders++;
 		return (coder);
 	}
 	return (NULL);
@@ -43,7 +43,6 @@ t_dongle	*init_usb(t_simulation *sim, int id)
 	usb = (t_dongle *)malloc(sizeof(t_dongle));
 	if (!usb)
 		return (NULL);
-	sim->n_dongles++;
 	usb->id = id + 1;
 	usb->sim = sim;
 	usb->status = AVAILABLE;
@@ -58,6 +57,7 @@ t_dongle	*init_usb(t_simulation *sim, int id)
 		usb->has_cond = true;
 	if (usb->has_lock == false || usb->has_cond == false)
 		return (NULL);
+	sim->n_dongles++;
 	return (usb);
 }
 
