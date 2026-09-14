@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/22 10:29:43 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/14 15:13:14 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/14 15:39:03 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,6 +69,8 @@ void	compile_init(t_coder *coder)
 	long long			time;
 
 	coder->status = COMPILING;
+	time = timer(&coder->sim->start);
+	coder->last_compile_start = time;
 	print_log(coder, timer(&coder->sim->start), false);
 	pthread_mutex_unlock(&coder->lock);
 	vigilant_sleep(coder, coder->sim->time_to_compile);
@@ -76,8 +78,6 @@ void	compile_init(t_coder *coder)
 		return ;
 	pthread_mutex_lock(&coder->lock);
 	lock_dongles_in_order(coder);
-	time = timer(&coder->sim->start);
-	coder->last_compile_time = time;
 	coder->completed_compiles++;
 	if (coder->completed_compiles >= coder->sim->compiles_required)
 		coder->status = ALL_COMPILES_COMPLETED;

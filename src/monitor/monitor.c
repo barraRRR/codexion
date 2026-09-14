@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/20 14:52:04 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/01 08:15:23 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/14 15:39:50 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,7 +46,7 @@ t_status	check_coder_status_and_cooldown(t_simulation *sim)
 			pthread_mutex_unlock(&sim->hub[i]->lock);
 			continue ;
 		}
-		else if (now >= sim->hub[i]->last_compile_time + sim->time_to_burnout)
+		else if (now >= sim->hub[i]->last_compile_start + sim->time_to_burnout)
 		{
 			sim->hub[i]->status = BURNOUT;
 			print_log(sim->hub[i], now, false);

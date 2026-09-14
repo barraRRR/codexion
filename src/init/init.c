@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/19 10:55:55 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/14 15:23:58 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/14 15:39:39 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,21 +19,22 @@ t_coder	*init_coder(t_simulation *sim, int id)
 	coder = (t_coder *)malloc(sizeof(t_coder));
 	if (!coder)
 		return (NULL);
-	sim->n_coders++;
 	coder->sim = sim;
 	coder->id = id + 1;
 	coder->usb_right = NULL;
 	coder->status = CODER_INIT;
 	coder->completed_compiles = 0;
-	coder->last_compile_time = 0;
+	coder->last_compile_start = 0;
 	coder->has_thread = false;
 	coder->has_lock = false;
-	if (!pthread_mutex_init(&coder->lock, NULL))
+	if (pthread_mutex_init(&coder->lock, NULL))
 	{
-		coder->has_lock = true;
-		return (coder);
+		free(coder);
+		return (NULL);
 	}
-	return (NULL);
+	coder->has_lock = true;
+	sim->n_coders++;
+	return (coder);
 }
 
 t_dongle	*init_usb(t_simulation *sim, int id)

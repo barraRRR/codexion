@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/13 09:29:21 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/14 15:12:30 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/14 15:38:38 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -122,7 +122,7 @@ struct s_coder
 	t_dongle				*usb_right;
 	t_dongle				*usb_left;
 	int						completed_compiles;
-	long long				last_compile_time;
+	long long				last_compile_start;
 };
 
 struct s_monitor
