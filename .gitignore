@@ -4,3 +4,4 @@ assets
 codexion
 .vscode
 test*
+.DS_Store

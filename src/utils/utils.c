@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/12 10:38:31 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/14 15:12:18 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/15 08:10:36 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -88,4 +88,3 @@ bool	safe_coder_status(t_coder *coder, t_status status, bool lock)
 		pthread_mutex_unlock(&coder->lock);
 	return (result);
 }
-	
