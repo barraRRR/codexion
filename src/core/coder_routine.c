@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/22 10:29:43 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/14 16:49:25 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/15 19:18:46 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -117,6 +117,11 @@ void	*quantum_compiler(void *arg)
 	t_status			status;
 
 	coder = (t_coder *)arg;
+	if (coder->sim->number_of_coders == 1)
+	{
+		solo_coder(coder);
+		return (NULL);
+	}
 	while (true)
 	{
 		if (sim_lock_and_access(coder->sim, SHUTDOWN_SIGNAL, false))

@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/13 09:29:21 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/15 18:43:54 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/15 19:16:10 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -193,5 +193,6 @@ bool			usb_lock_and_access(t_dongle *usb, t_status status,
 					bool update);
 
 void			add_simulation(t_simulation *sim);
+void			solo_coder(t_coder *coder);
 
 #endif
