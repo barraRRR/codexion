@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/20 10:45:52 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/14 15:40:05 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/14 17:12:07 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,6 +30,16 @@ void	edf_scheduler(t_coder **queue, t_coder *coder)
 	{
 		queue[1] = queue[0];
 		queue[0] = coder;
+	}
+	else if (coder->last_compile_start == queue[0]->last_compile_start)
+	{
+		if (coder->id <= queue[0]->id)
+		{
+			queue[1] = queue[0];
+			queue[0] = coder;
+		}
+		else
+			queue[1] = coder;
 	}
 	else if (!queue[1])
 		queue[1] = coder;
