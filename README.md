@@ -4,7 +4,10 @@
 
 # codexion
 
-### *A concurrent simulation of coders competing for quantum dongles.*
+<img width="3328" height="1195" alt="codexion_logo" src="https://github.com/user-attachments/assets/b4a29a88-3de0-4e4e-8d40-1bfc448a4a77" />
+
+
+### 🔥 *Master the Burnout* 🔥
 
 ![Language](https://img.shields.io/badge/language-C-blue.svg)
 ![Standard](https://img.shields.io/badge/standard-C89-blue.svg)
