@@ -6,13 +6,13 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/09/15 19:15:29 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/15 19:15:48 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/15 19:41:25 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
 
-void	solo_coder(t_coder *coder)
+void	*solo_coder(t_coder *coder)
 {
 	pthread_mutex_lock(&coder->usb_right->lock);
 	coder->usb_right->status = PLUGGED;
@@ -23,4 +23,11 @@ void	solo_coder(t_coder *coder)
 	pthread_mutex_unlock(&coder->lock);
 	while (!sim_lock_and_access(coder->sim, SHUTDOWN_SIGNAL, false))
 		usleep(SLEEP_INTERVAL);
+	return (NULL);
+}
+
+void	*exit_routine(t_coder *coder)
+{
+	pthread_mutex_unlock(&coder->lock);
+	return (NULL);
 }

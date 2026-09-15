@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/13 09:29:21 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/15 19:16:10 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/15 19:41:37 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -76,7 +76,7 @@ typedef enum e_status
 }	t_status;
 
 # define ARG_COUNT_ERR_MSG "Invalid number of arguments\n"
-# define ARG_NUM_ERR_MSG "Numerical arguments must be integers (0 < n <= INT_MAX)\n"
+# define ARG_NUM_ERR_MSG "Numerical arg must be integers (0 < n <= INT_MAX)\n"
 # define SCHED_ERR_MSG "Scheduler must be 'fifo' or 'edf'\n"
 # define MIN_COD_ERR_MSG "Quantum Compiling needs 2 or more coders\n"
 # define THREAD_ERR_MSG "Thread error\n"
@@ -193,6 +193,7 @@ bool			usb_lock_and_access(t_dongle *usb, t_status status,
 					bool update);
 
 void			add_simulation(t_simulation *sim);
-void			solo_coder(t_coder *coder);
+void			*solo_coder(t_coder *coder);
+void			*exit_routine(t_coder *coder);
 
 #endif
