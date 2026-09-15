@@ -4,7 +4,7 @@
 
 # codexion
 
-<img width="100%" alt="codexion_logo_1000" src="https://github.com/user-attachments/assets/8d892a72-6619-4063-93c0-1bdf15be778c" />
+<img width="60%" alt="codexion_logo_1000" src="https://github.com/user-attachments/assets/8d892a72-6619-4063-93c0-1bdf15be778c" />
 
 ### 🔥 *Master the Burnout* 🔥
 
