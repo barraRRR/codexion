@@ -4,4 +4,6 @@ assets
 codexion
 .vscode
 test*
+log.txt
 .DS_Store
+codexion-eval-logs-*

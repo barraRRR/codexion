@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/22 10:26:13 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/08/25 11:20:24 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/15 19:07:27 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,8 +56,12 @@ void	lock_dongles_in_order(t_coder *coder)
 
 void	unlock_dongles(t_coder *coder)
 {
-	pthread_cond_broadcast(&coder->usb_right->cond);
-	pthread_cond_broadcast(&coder->usb_left->cond);
-	pthread_mutex_unlock(&coder->usb_right->lock);
-	pthread_mutex_unlock(&coder->usb_left->lock);
+	if (coder->usb_right)
+		pthread_cond_broadcast(&coder->usb_right->cond);
+	if (coder->usb_left)
+		pthread_cond_broadcast(&coder->usb_left->cond);
+	if (coder->usb_right)
+		pthread_mutex_unlock(&coder->usb_right->lock);
+	if (coder->usb_right)
+		pthread_mutex_unlock(&coder->usb_left->lock);
 }

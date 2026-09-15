@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/19 10:55:55 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/14 15:39:39 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/15 18:48:42 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,6 +67,8 @@ void	link_coders_and_usbs(t_coder **hub, int number_of_coders)
 	int					i;
 	int					prev_idx;
 
+	if (number_of_coders == 1)
+		return ;
 	i = 0;
 	while (i < number_of_coders)
 	{

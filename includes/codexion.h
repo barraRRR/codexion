@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/13 09:29:21 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/15 08:03:21 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/15 18:43:54 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,7 +39,6 @@ typedef enum e_status
 	SCHED_ERR,
 	ARG_COUNT_ERR,
 	ARG_NUM_ERR,
-	ARG_INT_ERR,
 	MIN_COD_ERR,
 	THREAD_ERR,
 	INIT_LOG_ERR,
@@ -77,9 +76,7 @@ typedef enum e_status
 }	t_status;
 
 # define ARG_COUNT_ERR_MSG "Invalid number of arguments\n"
-# define ARG_NUM_ERR_MSG "Numerical arguments must be >= 0\n"
-# define ARG_INT_ERR_0_MSG "Numerical arguments must be greater than 0\n"
-# define ARG_INT_ERR_MSG "Numerical arguments cannot be greater than INT_MAX\n"
+# define ARG_NUM_ERR_MSG "Numerical arguments must be integers (0 < n <= INT_MAX)\n"
 # define SCHED_ERR_MSG "Scheduler must be 'fifo' or 'edf'\n"
 # define MIN_COD_ERR_MSG "Quantum Compiling needs 2 or more coders\n"
 # define THREAD_ERR_MSG "Thread error\n"
