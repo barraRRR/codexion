@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/13 09:29:21 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/15 19:41:37 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/16 08:51:44 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,8 +26,7 @@
 # include <stdbool.h>
 
 /* *** LIMITS *** */
-# define MAX_CODERS 512
-# define MAX_TIME 9999999999
+# define MAX_CODERS 1024
 # define SLEEP_INTERVAL 1000
 # define MONITOR_SLEEP 1000
 
@@ -39,7 +38,7 @@ typedef enum e_status
 	SCHED_ERR,
 	ARG_COUNT_ERR,
 	ARG_NUM_ERR,
-	MIN_COD_ERR,
+	MAX_COD_ERR,
 	THREAD_ERR,
 	INIT_LOG_ERR,
 	INIT_SIM_LOCK_ERR,
@@ -76,9 +75,9 @@ typedef enum e_status
 }	t_status;
 
 # define ARG_COUNT_ERR_MSG "Invalid number of arguments\n"
-# define ARG_NUM_ERR_MSG "Numerical arg must be integers (0 < n <= INT_MAX)\n"
+# define ARG_NUM_ERR_MSG "Numeric args must be an integer in [0, INT_MAX]\n"
 # define SCHED_ERR_MSG "Scheduler must be 'fifo' or 'edf'\n"
-# define MIN_COD_ERR_MSG "Quantum Compiling needs 2 or more coders\n"
+# define MAX_COD_ERR_MSG "N coders must be in [1, MAX_CODERS (1024 default)]\n"
 # define THREAD_ERR_MSG "Thread error\n"
 # define MALLOC_ERR_MSG "Malloc error\n"
 # define INIT_SIMULATION_ERR_MSG "Simulation mutex initialization error\n"

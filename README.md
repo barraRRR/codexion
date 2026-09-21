@@ -129,6 +129,11 @@ A dedicated monitor thread checks each coder's last compilation start time. If t
 
 All output is protected by a logging mutex. This ensures that a log line is printed atomically and that concurrent threads cannot interleave their messages.
 
+## Limits
+
+`MAX_CODERS` is capped at `1024`. Beyond this point, the monitor thread's per-tick sweep over every coder and dongle can no longer be guaranteed to complete within `MONITOR_SLEEP`, which would make burnout detection and timestamp accuracy unreliable. `parse_rules`
+rejects any `number_of_coders` outside `[1, MAX_CODERS]` with `MAX_COD_ERR` before the simulation starts.
+
 ---
 
 ## Thread synchronization mechanisms

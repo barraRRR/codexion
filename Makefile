@@ -6,7 +6,7 @@
 #    By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/08/17 11:38:13 by jbarreir          #+#    #+#              #
-#    Updated: 2026/08/24 14:58:52 by jbarreir         ###   ########.fr        #
+#    Updated: 2026/09/16 07:58:47 by jbarreir         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -16,7 +16,18 @@ CC			= cc
 HEADER		= codexion.h
 
 # Sustituir con finales
-SRC			= $(wildcard */*.c) $(wildcard */*/*.c)
+SRC			=	src/main.c \
+				src/init/init.c \
+				src/init/threads.c \
+				src/init/memory.c \
+				src/monitor/monitor.c \
+				src/core/safe_locks.c \
+				src/core/solo_coder.c \
+				src/core/coder_routine.c \
+				src/core/dongle.c \
+				src/scheduler/scheduler.c \
+				src/utils/utils.c \
+				src/utils/arg_parser.c
 
 OBJ			= $(SRC:.c=.o)
 
