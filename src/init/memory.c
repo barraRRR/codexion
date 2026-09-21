@@ -38,7 +38,6 @@ void	free_quantum(t_dongle **quantum, int i)
 	free(quantum);
 }
 
-/* Frees all coder pointers */
 void	free_hub_memory(t_simulation *sim)
 {
 	if (sim->monitor.has_thread)
