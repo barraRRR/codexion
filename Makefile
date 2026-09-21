@@ -15,7 +15,6 @@ CFLAGS		= -D_DEFAULT_SOURCE -std=c89 -Wall -Wextra -Werror -g -pthread -I includ
 CC			= cc
 HEADER		= codexion.h
 
-# Sustituir con finales
 SRC			=	src/main.c \
 				src/init/init.c \
 				src/init/threads.c \
