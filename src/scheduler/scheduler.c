@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/20 10:45:52 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/14 17:12:07 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/22 17:06:12 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,6 +69,7 @@ void	enqueue_coder(t_coder *coder)
 		edf_scheduler(coder->usb_left->queue, coder);
 	}
 	unlock_dongles(coder);
-	coder->status = WAITING_DONGLE;
+	if (am_i_burnt(coder, false, true, WAITING_DONGLE))
+		return ;
 	pthread_mutex_unlock(&coder->lock);
 }

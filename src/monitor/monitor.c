@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/20 14:52:04 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/15 08:10:16 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/22 17:10:26 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,10 +42,8 @@ t_status	check_coder_status_and_cooldown(t_simulation *sim)
 	{
 		update_cooldown(sim->quantum[i], &sim->start);
 		pthread_mutex_lock(&sim->hub[i]->lock);
-		if (sim->hub[i]->status != ALL_COMPILES_COMPLETED
-			&& now >= sim->hub[i]->last_compile_start + sim->time_to_burnout)
+		if (sim->hub[i]->status == BURNOUT)
 		{
-			sim->hub[i]->status = BURNOUT;
 			print_log(sim->hub[i], now, false);
 			pthread_mutex_unlock(&sim->hub[i]->lock);
 			return (SHUTDOWN_SIGNAL);

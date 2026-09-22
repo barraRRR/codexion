@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/13 09:29:21 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/16 08:51:44 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/22 17:04:40 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -194,5 +194,8 @@ bool			usb_lock_and_access(t_dongle *usb, t_status status,
 void			add_simulation(t_simulation *sim);
 void			*solo_coder(t_coder *coder);
 void			*exit_routine(t_coder *coder);
+bool 			am_i_burnt(t_coder *coder, bool lock, bool update,
+					t_status status);
+void			have_i_finished(t_coder *coder);
 
 #endif
