@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/22 10:26:13 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/15 19:13:26 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/22 18:08:59 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,4 +64,15 @@ void	unlock_dongles(t_coder *coder)
 		pthread_mutex_unlock(&coder->usb_right->lock);
 	if (coder->usb_left)
 		pthread_mutex_unlock(&coder->usb_left->lock);
+}
+
+void	dongle_cooldown(t_coder *coder)
+{
+	long long			time;
+
+	time = timer(&coder->sim->start);
+	coder->usb_right->last_compile_time = time;
+	coder->usb_left->last_compile_time = time;
+	coder->usb_right->status = COOLING_DOWN;
+	coder->usb_left->status = COOLING_DOWN;
 }

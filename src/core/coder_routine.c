@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/22 10:29:43 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/22 17:05:59 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/22 17:52:39 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,15 +46,15 @@ void	take_dongle(t_coder *coder)
 	{
 		lock_and_wait(coder, coder->usb_left, coder->usb_right, available);
 		available = both_usb_access(coder);
-		if (sim_lock_and_access(coder->sim, SHUTDOWN_SIGNAL, false))
+		if (sim_lock_and_access(coder->sim, SHUTDOWN_SIGNAL, false)
+			|| am_i_burnt(coder))
 		{
 			unlock_dongles(coder);
 			pthread_mutex_unlock(&coder->lock);
 			return ;
 		}
 	}
-	if (am_i_burnt(coder, false, true, TAKING_DONGLE))
-		return ;
+	coder->status = TAKING_DONGLE;
 	print_log(coder, timer(&coder->sim->start), false);
 	coder->usb_right->status = PLUGGED;
 	print_log(coder, timer(&coder->sim->start), false);
@@ -69,8 +69,12 @@ void	compile_init(t_coder *coder)
 {
 	long long			time;
 
-	if (am_i_burnt(coder, false, true, COMPILING))
+	if (am_i_burnt(coder))
+	{
+		pthread_mutex_unlock(&coder->lock);
 		return ;
+	}
+	coder->status = COMPILING;
 	time = timer(&coder->sim->start);
 	coder->last_compile_start = time;
 	print_log(coder, timer(&coder->sim->start), false);
@@ -81,43 +85,39 @@ void	compile_init(t_coder *coder)
 	pthread_mutex_lock(&coder->lock);
 	lock_dongles_in_order(coder);
 	coder->completed_compiles++;
-	if (am_i_burnt(coder, false, true, COMPILING_COMPLETED))
-		return;
+	if (!am_i_burnt(coder))
+		coder->status = COMPILING_COMPLETED;
 	pthread_mutex_unlock(&coder->lock);
-	coder->usb_right->last_compile_time = time;
-	coder->usb_left->last_compile_time = time;
-	coder->usb_right->status = COOLING_DOWN;
-	coder->usb_left->status = COOLING_DOWN;
+	dongle_cooldown(coder);
 	unlock_dongles(coder);
 }
 
 void	debug_and_refactor(t_coder *coder)
 {
-	if (am_i_burnt(coder, false, true, DEBUGGING))
+	if (am_i_burnt(coder))
+	{
+		pthread_mutex_unlock(&coder->lock);
 		return ;
+	}
+	coder->status = DEBUGGING;
 	print_log(coder, timer(&coder->sim->start), false);
 	pthread_mutex_unlock(&coder->lock);
 	vigilant_sleep(coder, coder->sim->time_to_debug);
 	if (sim_lock_and_access(coder->sim, SHUTDOWN_SIGNAL, false))
 		return ;
 	pthread_mutex_lock(&coder->lock);
-	if (am_i_burnt(coder, false, true, REFACTORING))
+	if (am_i_burnt(coder))
+	{
+		pthread_mutex_unlock(&coder->lock);
 		return ;
+	}
+	coder->status = REFACTORING;
 	print_log(coder, timer(&coder->sim->start), false);
 	pthread_mutex_unlock(&coder->lock);
 	vigilant_sleep(coder, coder->sim->time_to_refactor);
 	if (sim_lock_and_access(coder->sim, SHUTDOWN_SIGNAL, false))
 		return ;
 	have_i_finished(coder);
-}
-
-bool	up_and_running(t_coder *coder)
-{
-	if (sim_lock_and_access(coder->sim, SHUTDOWN_SIGNAL, false))
-		return (false);
-	if (am_i_burnt(coder, true, false, 0))
-		return (false);
-	return (true);
 }
 
 void	*quantum_compiler(void *arg)
