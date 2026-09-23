@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/13 09:29:21 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/23 16:29:17 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/23 17:37:55 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -175,7 +175,6 @@ t_coder			*dequeue(t_coder **queue);
 void			enqueue_coder(t_coder *coder);
 void			*monitor_routine(void *arg);
 void			vigilant_sleep(t_coder *coder, long long sleeping_time);
-bool			safe_coder_status(t_coder *coder, t_status status, bool lock);
 
 void			update_cooldown(t_dongle *usb, struct timeval *start);
 bool			usb_access(t_dongle *usb, t_coder *coder);
@@ -196,10 +195,6 @@ void			refactor_init(t_coder *coder);
 void			*quantum_compiler(void *arg);
 
 bool			sim_lock_and_access(t_simulation *sim, t_status status,
-					bool update);
-bool			coder_lock_and_access(t_coder *coder, t_status status,
-					bool update, bool unlock);
-bool			usb_lock_and_access(t_dongle *usb, t_status status,
 					bool update);
 
 void			add_simulation(t_simulation *sim);
