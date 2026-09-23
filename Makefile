@@ -6,12 +6,12 @@
 #    By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/08/17 11:38:13 by jbarreir          #+#    #+#              #
-#    Updated: 2026/09/22 17:03:12 by jbarreir         ###   ########.fr        #
+#    Updated: 2026/09/23 16:50:20 by jbarreir         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 NAME		= codexion
-CFLAGS		= -D_DEFAULT_SOURCE -std=c89 -Wall -Wextra -Werror -g -pthread -I includes
+CFLAGS		= -D_DEFAULT_SOURCE -std=c89 -Wall -Wextra -Werror -fsanitize=thread -g -pthread -I includes
 CC			= cc
 HEADER		= codexion.h
 
@@ -19,6 +19,7 @@ SRC			=	src/main.c \
 				src/init/init.c \
 				src/init/threads.c \
 				src/init/memory.c \
+				src/init/start_sequence.c \
 				src/monitor/monitor.c \
 				src/core/safe_locks.c \
 				src/core/solo_coder.c \

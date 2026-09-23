@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/20 14:52:04 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/22 17:29:14 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/23 16:09:44 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,6 +63,7 @@ void	*monitor_routine(void *arg)
 	int					i;
 
 	monitor = (t_monitor *)arg;
+	wait_for_start_sequence(monitor->sim);
 	status = AVAILABLE;
 	while (status != SHUTDOWN_SIGNAL)
 	{

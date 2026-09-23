@@ -6,4 +6,5 @@ codexion
 test*
 log.txt
 .DS_Store
+*.txt
 codexion-eval-logs-*

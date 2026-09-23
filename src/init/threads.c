@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/19 13:09:10 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/08/31 10:52:18 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/23 16:15:28 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,6 +35,7 @@ t_status	init_threads(t_simulation *sim)
 			&sim->monitor))
 		return (INIT_MONITOR_ERR);
 	sim->monitor.has_thread = true;
+	start_sequence(sim);
 	return (INIT_SIMULATION);
 }
 

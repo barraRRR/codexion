@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/25 17:16:45 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/08/26 11:20:56 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/23 16:29:43 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,5 +48,7 @@ void	free_hub_memory(t_simulation *sim)
 		pthread_mutex_destroy(&sim->lock);
 	if (sim->has_log)
 		pthread_mutex_destroy(&sim->log);
+	pthread_mutex_destroy(&sim->start_lock);
+	pthread_cond_destroy(&sim->start_cond);
 	sim->status = SUCCESS;
 }

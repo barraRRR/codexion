@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/22 10:29:43 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/23 11:24:32 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/23 16:11:09 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -126,6 +126,7 @@ void	*quantum_compiler(void *arg)
 	t_status			status;
 
 	coder = (t_coder *)arg;
+	wait_for_start_sequence(coder->sim);
 	if (coder->sim->number_of_coders == 1)
 		return (solo_coder(coder));
 	while (true)
