@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/13 09:29:04 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/15 08:03:40 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/23 11:37:05 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,8 @@ int	main(int argc, char **argv)
 	sim.status = parse_rules(&sim, argc, argv);
 	if (sim.status != PARSING_COMPLETED)
 		return (sim.status);
+	if (sim.compiles_required == 0)
+		return (SUCCESS);
 	sim.status = init_coworking(&sim);
 	if (sim.status == MALLOC_ERR)
 		return (print_err(MALLOC_ERR, MALLOC_ERR_MSG, &sim, true));

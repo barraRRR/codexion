@@ -6,7 +6,7 @@
 #    By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/08/17 11:38:13 by jbarreir          #+#    #+#              #
-#    Updated: 2026/09/16 07:58:47 by jbarreir         ###   ########.fr        #
+#    Updated: 2026/09/22 17:03:12 by jbarreir         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -26,7 +26,8 @@ SRC			=	src/main.c \
 				src/core/dongle.c \
 				src/scheduler/scheduler.c \
 				src/utils/utils.c \
-				src/utils/arg_parser.c
+				src/utils/arg_parser.c \
+				src/utils/awareness.c
 
 OBJ			= $(SRC:.c=.o)
 
