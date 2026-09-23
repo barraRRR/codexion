@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/13 09:29:21 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/22 17:49:31 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/23 11:24:06 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -179,6 +179,7 @@ void			lock_dongles_in_order(t_coder *coder);
 void			unlock_dongles(t_coder *coder);
 void			take_dongle(t_coder *coder);
 void			dongle_cooldown(t_coder *coder);
+void			dequeue_dongles(t_coder *coder);
 
 void			compile_init(t_coder *coder);
 void			debug_init(t_coder *coder);

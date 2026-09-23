@@ -6,13 +6,13 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/22 10:29:43 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/22 17:52:39 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/23 11:24:32 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
 
-void	lock_and_wait(t_coder *coder, t_dongle *left, t_dongle *right,
+void	lock_wait(t_coder *coder, t_dongle *left, t_dongle *right,
 						t_status status)
 {
 	pthread_mutex_t		*available;
@@ -41,26 +41,26 @@ void	take_dongle(t_coder *coder)
 	t_status			available;
 
 	lock_dongles_in_order(coder);
-	available = both_usb_access(coder);
-	while (available != AVAILABLE_BOTH)
+	if (!am_i_burnt(coder))
 	{
-		lock_and_wait(coder, coder->usb_left, coder->usb_right, available);
 		available = both_usb_access(coder);
-		if (sim_lock_and_access(coder->sim, SHUTDOWN_SIGNAL, false)
-			|| am_i_burnt(coder))
+		while (available != AVAILABLE_BOTH)
 		{
-			unlock_dongles(coder);
-			pthread_mutex_unlock(&coder->lock);
-			return ;
+			lock_wait(coder, coder->usb_left, coder->usb_right, available);
+			available = both_usb_access(coder);
+			if (sim_lock_and_access(coder->sim, SHUTDOWN_SIGNAL, false)
+				|| am_i_burnt(coder))
+			{
+				unlock_dongles(coder);
+				pthread_mutex_unlock(&coder->lock);
+				return ;
+			}
 		}
+		coder->status = TAKING_DONGLE;
+		dequeue_dongles(coder);
+		print_log(coder, timer(&coder->sim->start), false);
+		print_log(coder, timer(&coder->sim->start), false);
 	}
-	coder->status = TAKING_DONGLE;
-	print_log(coder, timer(&coder->sim->start), false);
-	coder->usb_right->status = PLUGGED;
-	print_log(coder, timer(&coder->sim->start), false);
-	coder->usb_left->status = PLUGGED;
-	dequeue(coder->usb_right->queue);
-	dequeue(coder->usb_left->queue);
 	unlock_dongles(coder);
 	pthread_mutex_unlock(&coder->lock);
 }
@@ -80,13 +80,13 @@ void	compile_init(t_coder *coder)
 	print_log(coder, timer(&coder->sim->start), false);
 	pthread_mutex_unlock(&coder->lock);
 	vigilant_sleep(coder, coder->sim->time_to_compile);
-	if (safe_coder_status(coder, BURNOUT, true))
-		return ;
 	pthread_mutex_lock(&coder->lock);
 	lock_dongles_in_order(coder);
-	coder->completed_compiles++;
 	if (!am_i_burnt(coder))
+	{
+		coder->completed_compiles++;
 		coder->status = COMPILING_COMPLETED;
+	}
 	pthread_mutex_unlock(&coder->lock);
 	dongle_cooldown(coder);
 	unlock_dongles(coder);
