@@ -6,7 +6,7 @@
 #    By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/08/17 11:38:13 by jbarreir          #+#    #+#              #
-#    Updated: 2026/09/23 17:53:01 by jbarreir         ###   ########.fr        #
+#    Updated: 2026/09/24 09:59:13 by jbarreir         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -19,6 +19,7 @@ SRC			=	src/main.c \
 				src/init/init.c \
 				src/init/threads.c \
 				src/init/memory.c \
+				src/init/start_sequence.c \
 				src/monitor/monitor.c \
 				src/core/solo_coder.c \
 				src/core/coder_routine.c \

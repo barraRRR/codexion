@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/13 09:29:21 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/23 17:37:55 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/24 09:49:41 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -188,6 +188,7 @@ void			dequeue_dongles(t_coder *coder);
 t_status		init_start_cond(t_simulation *sim);
 void			wait_for_start_sequence(t_simulation *sim);
 void			start_sequence(t_simulation *sim);
+void			abort_start_sequence(t_simulation *sim);
 
 void			compile_init(t_coder *coder);
 void			debug_init(t_coder *coder);
