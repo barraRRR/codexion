@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/12 10:38:31 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/22 16:09:07 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/23 17:38:13 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,17 +74,17 @@ void	vigilant_sleep(t_coder *coder, long long sleeping_time)
 	}
 }
 
-bool	safe_coder_status(t_coder *coder, t_status status, bool lock)
+bool	sim_lock_and_access(t_simulation *sim, t_status status, bool update)
 {
-	bool				result;
+	bool result;
 
-	if (lock)
-		pthread_mutex_lock(&coder->lock);
-	if (coder->status == status)
+	pthread_mutex_lock(&sim->lock);
+	if (sim->status == status)
 		result = true;
 	else
 		result = false;
-	if (lock)
-		pthread_mutex_unlock(&coder->lock);
+	if (update && sim->status != SHUTDOWN_SIGNAL)
+		sim->status = status;
+	pthread_mutex_unlock(&sim->lock);
 	return (result);
 }

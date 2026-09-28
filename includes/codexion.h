@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/13 09:29:21 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/23 11:24:06 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/24 09:49:41 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,6 +49,8 @@ typedef enum e_status
 	INIT_THREADS,
 	INIT_THREADS_COMPLETED,
 	INIT_THREADS_ERR,
+	INIT_START_COND,
+	INIT_START_COND_ERR,
 	INIT_SIMULATION,
 	INIT_SIMULATION_ERR,
 	MALLOC_ERR,
@@ -135,6 +137,9 @@ struct s_simulation
 	bool					has_lock;
 	pthread_mutex_t			log;
 	bool					has_log;
+	pthread_mutex_t			start_lock;
+	pthread_cond_t			start_cond;
+	bool					is_started;
 	t_coder					**hub;
 	t_dongle				**quantum;
 	t_monitor				monitor;
@@ -170,7 +175,6 @@ t_coder			*dequeue(t_coder **queue);
 void			enqueue_coder(t_coder *coder);
 void			*monitor_routine(void *arg);
 void			vigilant_sleep(t_coder *coder, long long sleeping_time);
-bool			safe_coder_status(t_coder *coder, t_status status, bool lock);
 
 void			update_cooldown(t_dongle *usb, struct timeval *start);
 bool			usb_access(t_dongle *usb, t_coder *coder);
@@ -181,16 +185,17 @@ void			take_dongle(t_coder *coder);
 void			dongle_cooldown(t_coder *coder);
 void			dequeue_dongles(t_coder *coder);
 
+t_status		init_start_cond(t_simulation *sim);
+void			wait_for_start_sequence(t_simulation *sim);
+void			start_sequence(t_simulation *sim);
+void			abort_start_sequence(t_simulation *sim);
+
 void			compile_init(t_coder *coder);
 void			debug_init(t_coder *coder);
 void			refactor_init(t_coder *coder);
 void			*quantum_compiler(void *arg);
 
 bool			sim_lock_and_access(t_simulation *sim, t_status status,
-					bool update);
-bool			coder_lock_and_access(t_coder *coder, t_status status,
-					bool update, bool unlock);
-bool			usb_lock_and_access(t_dongle *usb, t_status status,
 					bool update);
 
 void			add_simulation(t_simulation *sim);
