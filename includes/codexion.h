@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/13 09:29:21 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/24 09:49:41 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/28 20:00:17 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,6 +51,8 @@ typedef enum e_status
 	INIT_THREADS_ERR,
 	INIT_START_COND,
 	INIT_START_COND_ERR,
+	INIT_PRINTER,
+	INIT_PRINTER_ERR,
 	INIT_SIMULATION,
 	INIT_SIMULATION_ERR,
 	MALLOC_ERR,
@@ -73,7 +75,7 @@ typedef enum e_status
 	AVAILABLE_NONE,
 	PLUGGED,
 	COOLING_DOWN,
-	SHUTDOWN_SIGNAL
+	SHUTDOWN
 }	t_status;
 
 # define ARG_COUNT_ERR_MSG "Invalid number of arguments\n"
@@ -88,6 +90,8 @@ typedef enum e_status
 typedef struct s_dongle		t_dongle;
 typedef struct s_coder		t_coder;
 typedef struct s_monitor	t_monitor;
+typedef struct s_log		t_log;
+typedef struct s_printer	t_printer;
 typedef struct s_simulation	t_simulation;
 
 typedef enum e_scheduler
@@ -131,6 +135,28 @@ struct s_monitor
 	bool					has_thread;
 };
 
+struct s_log
+{
+	long long				time;
+	t_status				status;
+	int						coder_id;
+	t_log					*next;
+};
+
+struct s_printer
+{
+	t_simulation			*sim;
+	pthread_t				thread;
+	bool					has_thread;
+	pthread_mutex_t			lock;
+	bool					has_lock;
+	pthread_cond_t			cond;
+	bool					has_cond;
+	bool					print;
+	t_log					*head_log;
+	t_log					*last_printed;
+};
+
 struct s_simulation
 {
 	pthread_mutex_t			lock;
@@ -138,14 +164,17 @@ struct s_simulation
 	pthread_mutex_t			log;
 	bool					has_log;
 	pthread_mutex_t			start_lock;
+	bool					has_start_lock;
 	pthread_cond_t			start_cond;
+	bool					has_start_cond;
 	bool					is_started;
 	t_coder					**hub;
 	t_dongle				**quantum;
 	t_monitor				monitor;
+	t_printer				printer;
 	t_status				status;
-	struct timeval			start;
-	int						number_of_coders;
+	struct timeval			start_time;
+	int						n_coders;
 	long long				time_to_burnout;
 	long long				time_to_compile;
 	long long				time_to_debug;
@@ -153,56 +182,58 @@ struct s_simulation
 	long long				dongle_cooldown;
 	int						compiles_required;
 	t_scheduler				scheduler;
-	int						n_coders;
 	int						n_dongles;
 };
 
 /* *** PROTOTYPES *** */
-long long		timer(struct timeval *start);
-int				parse_rules(t_simulation *sim, int argc, char **argv);
+long long		timer(t_simulation *sim);
+t_status		parse_rules(t_simulation *sim, int argc, char **argv);
 t_status		init_coworking(t_simulation *sim);
-void			free_hub_memory(t_simulation *sim);
+t_status		free_all_memory(t_simulation *sim, t_status status, int i);
 t_status		init_threads(t_simulation *sim);
-void			join_threads_and_destroy_mutex_cond(t_simulation *sim);
 int				print_err(int error_code, char *err, t_simulation *sim,
 					bool free_mem);
-void			print_log(t_coder *coder, long long timestamp, bool lock);
+t_status		exit_code_unlock(t_coder *coder, t_status status, bool dongles);
+
+void			init_sim_data(t_simulation *sim);
+
 void			*quantum_compiler(void *arg);
-void			print_status(t_simulation sim);
+void			vigilant_sleep(t_coder *coder, long long sleeping_time);
 void			fifo_scheduler(t_coder **queue, t_coder *coder);
 void			edf_scheduler(t_coder **queue, t_coder *coder);
 t_coder			*dequeue(t_coder **queue);
 void			enqueue_coder(t_coder *coder);
 void			*monitor_routine(void *arg);
-void			vigilant_sleep(t_coder *coder, long long sleeping_time);
 
-void			update_cooldown(t_dongle *usb, struct timeval *start);
+void			update_cooldown(t_dongle *usb, t_simulation *sim);
 bool			usb_access(t_dongle *usb, t_coder *coder);
 t_status		both_usb_access(t_coder *coder);
 void			lock_dongles_in_order(t_coder *coder);
 void			unlock_dongles(t_coder *coder);
-void			take_dongle(t_coder *coder);
 void			dongle_cooldown(t_coder *coder);
 void			dequeue_dongles(t_coder *coder);
 
-t_status		init_start_cond(t_simulation *sim);
 void			wait_for_start_sequence(t_simulation *sim);
 void			start_sequence(t_simulation *sim);
-void			abort_start_sequence(t_simulation *sim);
-
-void			compile_init(t_coder *coder);
-void			debug_init(t_coder *coder);
-void			refactor_init(t_coder *coder);
-void			*quantum_compiler(void *arg);
+t_status		abort_start_sequence(t_simulation *sim, t_status status);
 
 bool			sim_lock_and_access(t_simulation *sim, t_status status,
 					bool update);
 
-void			add_simulation(t_simulation *sim);
 void			*solo_coder(t_coder *coder);
 void			*exit_routine(t_coder *coder);
 bool			am_i_burnt(t_coder *coder);
 void			have_i_finished(t_coder *coder);
 bool			up_and_running(t_coder *coder);
+
+void			*printer_routine(void *arg);
+bool			append_log(t_coder *coder, long long time);
+void			free_logs(t_printer *printer, bool free_all);
+
+void			pthread_destroy_coder(t_coder *coder);
+void			pthread_destroy_dongle(t_dongle *dongle);
+void			pthread_destroy_monitor(t_monitor *monitor);
+void			pthread_destroy_printer(t_printer *printer);
+void			pthread_destroy_sim(t_simulation *sim);
 
 #endif

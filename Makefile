@@ -6,7 +6,7 @@
 #    By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/08/17 11:38:13 by jbarreir          #+#    #+#              #
-#    Updated: 2026/09/24 09:59:13 by jbarreir         ###   ########.fr        #
+#    Updated: 2026/09/28 18:42:43 by jbarreir         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -16,14 +16,16 @@ CC			= cc
 HEADER		= codexion.h
 
 SRC			=	src/main.c \
-				src/init/init.c \
-				src/init/threads.c \
-				src/init/memory.c \
-				src/init/start_sequence.c \
-				src/monitor/monitor.c \
-				src/core/solo_coder.c \
 				src/core/coder_routine.c \
+				src/core/init_data.c \
 				src/core/dongle.c \
+				src/core/solo_coder.c \
+				src/core/free_memory.c \
+				src/core/start_sequence.c \
+				src/monitor/monitor.c \
+				src/printer/printer.c \
+				src/pthreads/init_pthreads.c \
+				src/pthreads/destroy_pthreads.c \
 				src/scheduler/scheduler.c \
 				src/utils/utils.c \
 				src/utils/arg_parser.c \

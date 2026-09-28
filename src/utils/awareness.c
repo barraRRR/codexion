@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/09/22 15:49:46 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/22 17:44:14 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/28 20:07:46 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,7 @@ bool	am_i_burnt(t_coder *coder)
 
 	if (coder->status == BURNOUT)
 		return (true);
-	now = timer(&coder->sim->start);
+	now = timer(coder->sim);
 	result = false;
 	if (coder->last_compile_start + coder->sim->time_to_burnout <= now)
 	{
@@ -52,7 +52,7 @@ bool	up_and_running(t_coder *coder)
 	bool				result;
 
 	result = true;
-	if (sim_lock_and_access(coder->sim, SHUTDOWN_SIGNAL, false))
+	if (sim_lock_and_access(coder->sim, SHUTDOWN, false))
 		result = false;
 	pthread_mutex_lock(&coder->lock);
 	if (am_i_burnt(coder))

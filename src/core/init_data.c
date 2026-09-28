@@ -1,18 +1,39 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   init.c                                             :+:      :+:    :+:   */
+/*   init_data.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/19 10:55:55 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/15 19:13:05 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/28 18:25:03 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
 
-t_coder	*init_coder(t_simulation *sim, int id)
+void	init_sim_data(t_simulation *sim)
+{
+	sim->monitor.sim = sim;
+	sim->monitor.has_thread = false;
+	sim->printer.sim = sim;
+	sim->printer.has_lock = false;
+	sim->printer.has_cond = false;
+	sim->printer.print = false;
+	sim->printer.head_log = NULL;
+	sim->printer.last_printed = NULL;
+	sim->has_lock = false;
+	sim->has_log = false;
+	sim->has_start_lock = false;
+	sim->has_start_cond = false;
+	sim->is_started = false;
+	sim->hub = NULL;
+	sim->quantum = NULL;
+	sim->n_coders = 0;
+	sim->n_dongles = 0;
+}
+
+static t_coder	*init_coder(t_simulation *sim, int id)
 {
 	t_coder				*coder;
 
@@ -37,7 +58,7 @@ t_coder	*init_coder(t_simulation *sim, int id)
 	return (coder);
 }
 
-t_dongle	*init_usb(t_simulation *sim, int id)
+static t_dongle	*init_usb(t_simulation *sim, int id)
 {
 	t_dongle			*usb;
 
@@ -57,12 +78,15 @@ t_dongle	*init_usb(t_simulation *sim, int id)
 	if (!pthread_cond_init(&usb->cond, NULL))
 		usb->has_cond = true;
 	if (usb->has_lock == false || usb->has_cond == false)
+	{
+		free(usb);
 		return (NULL);
+	}
 	sim->n_dongles++;
 	return (usb);
 }
 
-void	link_coders_and_usbs(t_coder **hub, int number_of_coders)
+static void	link_coders_and_usbs(t_coder **hub, int number_of_coders)
 {
 	int					i;
 	int					prev_idx;
@@ -89,22 +113,22 @@ t_status	init_coworking(t_simulation *sim)
 	int					i;
 	int					n;
 
-	n = sim->number_of_coders;
+	n = sim->n_coders;
 	sim->quantum = (t_dongle **)malloc(sizeof(t_dongle *) * (n + 1));
 	if (!sim->quantum)
 		return (MALLOC_ERR);
 	sim->hub = (t_coder **)malloc(sizeof(t_coder *) * (n + 1));
 	if (!sim->hub)
-		return (MALLOC_ERR);
+		return (free_all_memory(sim, MALLOC_ERR, 0));
 	i = -1;
 	while (++i < n)
 	{
 		sim->hub[i] = init_coder(sim, i);
 		if (!sim->hub[i])
-			return (MALLOC_ERR);
+			return (free_all_memory(sim, MALLOC_ERR, i + 1));
 		sim->quantum[i] = init_usb(sim, i);
 		if (!sim->quantum[i])
-			return (MALLOC_ERR);
+			return (free_all_memory(sim, MALLOC_ERR, i + 1));
 		sim->hub[i]->usb_right = sim->quantum[i];
 	}
 	sim->hub[i] = NULL;
