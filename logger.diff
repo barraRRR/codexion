@@ -1,0 +1,1545 @@
+diff --git a/.gitignore b/.gitignore
+index 18b4b49..c9e0207 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -6,4 +6,5 @@ codexion
+ test*
+ log.txt
+ .DS_Store
++*.txt
+ codexion-eval-logs-*
+\ No newline at end of file
+diff --git a/Makefile b/Makefile
+index b1fbe5e..eba4eea 100644
+--- a/Makefile
++++ b/Makefile
+@@ -6,27 +6,30 @@
+ #    By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+         #
+ #                                                 +#+#+#+#+#+   +#+            #
+ #    Created: 2026/08/17 11:38:13 by jbarreir          #+#    #+#              #
+-#    Updated: 2026/09/16 07:58:47 by jbarreir         ###   ########.fr        #
++#    Updated: 2026/09/28 18:42:43 by jbarreir         ###   ########.fr        #
+ #                                                                              #
+ # **************************************************************************** #
+ 
+ NAME		= codexion
+-CFLAGS		= -D_DEFAULT_SOURCE -std=c89 -Wall -Wextra -Werror -g -pthread -I includes
++CFLAGS		= -D_DEFAULT_SOURCE -std=c89 -Wall -Wextra -Werror -fsanitize=thread -g -pthread -I includes
+ CC			= cc
+ HEADER		= codexion.h
+ 
+ SRC			=	src/main.c \
+-				src/init/init.c \
+-				src/init/threads.c \
+-				src/init/memory.c \
+-				src/monitor/monitor.c \
+-				src/core/safe_locks.c \
+-				src/core/solo_coder.c \
+ 				src/core/coder_routine.c \
++				src/core/init_data.c \
+ 				src/core/dongle.c \
++				src/core/solo_coder.c \
++				src/core/free_memory.c \
++				src/core/start_sequence.c \
++				src/monitor/monitor.c \
++				src/printer/printer.c \
++				src/pthreads/init_pthreads.c \
++				src/pthreads/destroy_pthreads.c \
+ 				src/scheduler/scheduler.c \
+ 				src/utils/utils.c \
+-				src/utils/arg_parser.c
++				src/utils/arg_parser.c \
++				src/utils/awareness.c
+ 
+ OBJ			= $(SRC:.c=.o)
+ 
+diff --git a/includes/codexion.h b/includes/codexion.h
+index fcb7404..26f9dfd 100644
+--- a/includes/codexion.h
++++ b/includes/codexion.h
+@@ -6,7 +6,7 @@
+ /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
+ /*                                                +#+#+#+#+#+   +#+           */
+ /*   Created: 2026/08/13 09:29:21 by jbarreir          #+#    #+#             */
+-/*   Updated: 2026/09/16 08:51:44 by jbarreir         ###   ########.fr       */
++/*   Updated: 2026/09/28 20:00:17 by jbarreir         ###   ########.fr       */
+ /*                                                                            */
+ /* ************************************************************************** */
+ 
+@@ -49,6 +49,10 @@ typedef enum e_status
+ 	INIT_THREADS,
+ 	INIT_THREADS_COMPLETED,
+ 	INIT_THREADS_ERR,
++	INIT_START_COND,
++	INIT_START_COND_ERR,
++	INIT_PRINTER,
++	INIT_PRINTER_ERR,
+ 	INIT_SIMULATION,
+ 	INIT_SIMULATION_ERR,
+ 	MALLOC_ERR,
+@@ -71,7 +75,7 @@ typedef enum e_status
+ 	AVAILABLE_NONE,
+ 	PLUGGED,
+ 	COOLING_DOWN,
+-	SHUTDOWN_SIGNAL
++	SHUTDOWN
+ }	t_status;
+ 
+ # define ARG_COUNT_ERR_MSG "Invalid number of arguments\n"
+@@ -86,6 +90,8 @@ typedef enum e_status
+ typedef struct s_dongle		t_dongle;
+ typedef struct s_coder		t_coder;
+ typedef struct s_monitor	t_monitor;
++typedef struct s_log		t_log;
++typedef struct s_printer	t_printer;
+ typedef struct s_simulation	t_simulation;
+ 
+ typedef enum e_scheduler
+@@ -129,18 +135,46 @@ struct s_monitor
+ 	bool					has_thread;
+ };
+ 
++struct s_log
++{
++	long long				time;
++	t_status				status;
++	int						coder_id;
++	t_log					*next;
++};
++
++struct s_printer
++{
++	t_simulation			*sim;
++	pthread_t				thread;
++	bool					has_thread;
++	pthread_mutex_t			lock;
++	bool					has_lock;
++	pthread_cond_t			cond;
++	bool					has_cond;
++	bool					print;
++	t_log					*head_log;
++	t_log					*last_printed;
++};
++
+ struct s_simulation
+ {
+ 	pthread_mutex_t			lock;
+ 	bool					has_lock;
+ 	pthread_mutex_t			log;
+ 	bool					has_log;
++	pthread_mutex_t			start_lock;
++	bool					has_start_lock;
++	pthread_cond_t			start_cond;
++	bool					has_start_cond;
++	bool					is_started;
+ 	t_coder					**hub;
+ 	t_dongle				**quantum;
+ 	t_monitor				monitor;
++	t_printer				printer;
+ 	t_status				status;
+-	struct timeval			start;
+-	int						number_of_coders;
++	struct timeval			start_time;
++	int						n_coders;
+ 	long long				time_to_burnout;
+ 	long long				time_to_compile;
+ 	long long				time_to_debug;
+@@ -148,51 +182,58 @@ struct s_simulation
+ 	long long				dongle_cooldown;
+ 	int						compiles_required;
+ 	t_scheduler				scheduler;
+-	int						n_coders;
+ 	int						n_dongles;
+ };
+ 
+ /* *** PROTOTYPES *** */
+-long long		timer(struct timeval *start);
+-int				parse_rules(t_simulation *sim, int argc, char **argv);
++long long		timer(t_simulation *sim);
++t_status		parse_rules(t_simulation *sim, int argc, char **argv);
+ t_status		init_coworking(t_simulation *sim);
+-void			free_hub_memory(t_simulation *sim);
++t_status		free_all_memory(t_simulation *sim, t_status status, int i);
+ t_status		init_threads(t_simulation *sim);
+-void			join_threads_and_destroy_mutex_cond(t_simulation *sim);
+ int				print_err(int error_code, char *err, t_simulation *sim,
+ 					bool free_mem);
+-void			print_log(t_coder *coder, long long timestamp, bool lock);
++t_status		exit_code_unlock(t_coder *coder, t_status status, bool dongles);
++
++void			init_sim_data(t_simulation *sim);
++
+ void			*quantum_compiler(void *arg);
+-void			print_status(t_simulation sim);
++void			vigilant_sleep(t_coder *coder, long long sleeping_time);
+ void			fifo_scheduler(t_coder **queue, t_coder *coder);
+ void			edf_scheduler(t_coder **queue, t_coder *coder);
+ t_coder			*dequeue(t_coder **queue);
+ void			enqueue_coder(t_coder *coder);
+ void			*monitor_routine(void *arg);
+-void			vigilant_sleep(t_coder *coder, long long sleeping_time);
+-bool			safe_coder_status(t_coder *coder, t_status status, bool lock);
+ 
+-void			update_cooldown(t_dongle *usb, struct timeval *start);
++void			update_cooldown(t_dongle *usb, t_simulation *sim);
+ bool			usb_access(t_dongle *usb, t_coder *coder);
+ t_status		both_usb_access(t_coder *coder);
+ void			lock_dongles_in_order(t_coder *coder);
+ void			unlock_dongles(t_coder *coder);
+-void			take_dongle(t_coder *coder);
++void			dongle_cooldown(t_coder *coder);
++void			dequeue_dongles(t_coder *coder);
+ 
+-void			compile_init(t_coder *coder);
+-void			debug_init(t_coder *coder);
+-void			refactor_init(t_coder *coder);
+-void			*quantum_compiler(void *arg);
++void			wait_for_start_sequence(t_simulation *sim);
++void			start_sequence(t_simulation *sim);
++t_status		abort_start_sequence(t_simulation *sim, t_status status);
+ 
+ bool			sim_lock_and_access(t_simulation *sim, t_status status,
+ 					bool update);
+-bool			coder_lock_and_access(t_coder *coder, t_status status,
+-					bool update, bool unlock);
+-bool			usb_lock_and_access(t_dongle *usb, t_status status,
+-					bool update);
+ 
+-void			add_simulation(t_simulation *sim);
+ void			*solo_coder(t_coder *coder);
+ void			*exit_routine(t_coder *coder);
++bool			am_i_burnt(t_coder *coder);
++void			have_i_finished(t_coder *coder);
++bool			up_and_running(t_coder *coder);
++
++void			*printer_routine(void *arg);
++bool			append_log(t_coder *coder, long long time);
++void			free_logs(t_printer *printer, bool free_all);
++
++void			pthread_destroy_coder(t_coder *coder);
++void			pthread_destroy_dongle(t_dongle *dongle);
++void			pthread_destroy_monitor(t_monitor *monitor);
++void			pthread_destroy_printer(t_printer *printer);
++void			pthread_destroy_sim(t_simulation *sim);
+ 
+ #endif
+\ No newline at end of file
+diff --git a/src/core/coder_routine.c b/src/core/coder_routine.c
+index c74179a..9928cca 100644
+--- a/src/core/coder_routine.c
++++ b/src/core/coder_routine.c
+@@ -6,13 +6,21 @@
+ /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
+ /*                                                +#+#+#+#+#+   +#+           */
+ /*   Created: 2026/08/22 10:29:43 by jbarreir          #+#    #+#             */
+-/*   Updated: 2026/09/15 19:42:47 by jbarreir         ###   ########.fr       */
++/*   Updated: 2026/09/28 19:58:50 by jbarreir         ###   ########.fr       */
+ /*                                                                            */
+ /* ************************************************************************** */
+ 
+ #include "codexion.h"
+ 
+-void	lock_and_wait(t_coder *coder, t_dongle *left, t_dongle *right,
++t_status	exit_code_unlock(t_coder *coder, t_status status, bool dongles)
++{
++	if (dongles)
++		unlock_dongles(coder);
++	pthread_mutex_unlock(&coder->lock);
++	return (status);
++}
++
++static void	lock_wait(t_coder *coder, t_dongle *left, t_dongle *right,
+ 						t_status status)
+ {
+ 	pthread_mutex_t		*available;
+@@ -36,79 +44,78 @@ void	lock_and_wait(t_coder *coder, t_dongle *left, t_dongle *right,
+ 	lock_dongles_in_order(coder);
+ }
+ 
+-void	take_dongle(t_coder *coder)
++static t_status	take_dongles(t_coder *coder)
+ {
+ 	t_status			available;
+ 
+ 	lock_dongles_in_order(coder);
+-	available = both_usb_access(coder);
+-	while (available != AVAILABLE_BOTH)
++	if (!am_i_burnt(coder))
+ 	{
+-		lock_and_wait(coder, coder->usb_left, coder->usb_right, available);
+ 		available = both_usb_access(coder);
+-		if (sim_lock_and_access(coder->sim, SHUTDOWN_SIGNAL, false))
++		while (available != AVAILABLE_BOTH)
+ 		{
+-			unlock_dongles(coder);
+-			pthread_mutex_unlock(&coder->lock);
+-			return ;
++			lock_wait(coder, coder->usb_left, coder->usb_right, available);
++			available = both_usb_access(coder);
++			if (sim_lock_and_access(coder->sim, SHUTDOWN, false)
++				|| am_i_burnt(coder))
++				return (exit_code_unlock(coder, SHUTDOWN, true));
+ 		}
++		coder->status = TAKING_DONGLE;
++		if (!append_log(coder, timer(coder->sim)))
++			return (exit_code_unlock(coder, MALLOC_ERR, true));
++		dequeue_dongles(coder);
+ 	}
+-	coder->status = TAKING_DONGLE;
+-	print_log(coder, timer(&coder->sim->start), false);
+-	coder->usb_right->status = PLUGGED;
+-	print_log(coder, timer(&coder->sim->start), false);
+-	coder->usb_left->status = PLUGGED;
+-	dequeue(coder->usb_right->queue);
+-	dequeue(coder->usb_left->queue);
+ 	unlock_dongles(coder);
+ 	pthread_mutex_unlock(&coder->lock);
++	return (SUCCESS);
+ }
+ 
+-void	compile_init(t_coder *coder)
++static t_status	compile_init(t_coder *coder)
+ {
+-	long long			time;
+-
++	if (am_i_burnt(coder))
++		return (exit_code_unlock(coder, BURNOUT, false));
+ 	coder->status = COMPILING;
+-	time = timer(&coder->sim->start);
+-	coder->last_compile_start = time;
+-	print_log(coder, timer(&coder->sim->start), false);
++	coder->last_compile_start = timer(coder->sim);
++	if (!append_log(coder, coder->last_compile_start))
++		return (exit_code_unlock(coder, MALLOC_ERR, false));
+ 	pthread_mutex_unlock(&coder->lock);
+ 	vigilant_sleep(coder, coder->sim->time_to_compile);
+-	if (safe_coder_status(coder, BURNOUT, true))
+-		return ;
+ 	pthread_mutex_lock(&coder->lock);
+ 	lock_dongles_in_order(coder);
+-	coder->completed_compiles++;
+-	coder->status = COMPILING_COMPLETED;
++	if (!am_i_burnt(coder))
++	{
++		coder->completed_compiles++;
++		coder->status = COMPILING_COMPLETED;
++	}
+ 	pthread_mutex_unlock(&coder->lock);
+-	coder->usb_right->last_compile_time = time;
+-	coder->usb_left->last_compile_time = time;
+-	coder->usb_right->status = COOLING_DOWN;
+-	coder->usb_left->status = COOLING_DOWN;
++	dongle_cooldown(coder);
+ 	unlock_dongles(coder);
++	return (coder->status);
+ }
+ 
+-void	debug_and_refactor(t_coder *coder)
++static t_status	debug_and_refactor(t_coder *coder)
+ {
++	if (am_i_burnt(coder))
++		return (exit_code_unlock(coder, BURNOUT, false));
+ 	coder->status = DEBUGGING;
+-	print_log(coder, timer(&coder->sim->start), false);
++	if (!append_log(coder, timer(coder->sim)))
++		return (exit_code_unlock(coder, MALLOC_ERR, false));
+ 	pthread_mutex_unlock(&coder->lock);
+ 	vigilant_sleep(coder, coder->sim->time_to_debug);
+-	if (sim_lock_and_access(coder->sim, SHUTDOWN_SIGNAL, false))
+-		return ;
++	if (sim_lock_and_access(coder->sim, SHUTDOWN, false))
++		return (SHUTDOWN);
+ 	pthread_mutex_lock(&coder->lock);
++	if (am_i_burnt(coder))
++		return (exit_code_unlock(coder, BURNOUT, false));
+ 	coder->status = REFACTORING;
+-	print_log(coder, timer(&coder->sim->start), false);
++	if (!append_log(coder, timer(coder->sim)))
++		return (exit_code_unlock(coder, MALLOC_ERR, false));
+ 	pthread_mutex_unlock(&coder->lock);
+ 	vigilant_sleep(coder, coder->sim->time_to_refactor);
+-	if (sim_lock_and_access(coder->sim, SHUTDOWN_SIGNAL, false))
+-		return ;
+-	pthread_mutex_lock(&coder->lock);
+-	if (coder->completed_compiles >= coder->sim->compiles_required)
+-		coder->status = ALL_COMPILES_COMPLETED;
+-	else
+-		coder->status = REFACTORING_COMPLETED;
+-	pthread_mutex_unlock(&coder->lock);
++	if (sim_lock_and_access(coder->sim, SHUTDOWN, false))
++		return (SHUTDOWN);
++	have_i_finished(coder);
++	return (coder->status);
+ }
+ 
+ void	*quantum_compiler(void *arg)
+@@ -117,11 +124,12 @@ void	*quantum_compiler(void *arg)
+ 	t_status			status;
+ 
+ 	coder = (t_coder *)arg;
+-	if (coder->sim->number_of_coders == 1)
++	wait_for_start_sequence(coder->sim);
++	if (coder->sim->n_coders == 1)
+ 		return (solo_coder(coder));
+ 	while (true)
+ 	{
+-		if (sim_lock_and_access(coder->sim, SHUTDOWN_SIGNAL, false))
++		if (!up_and_running(coder))
+ 			break ;
+ 		pthread_mutex_lock(&coder->lock);
+ 		status = coder->status;
+@@ -130,7 +138,7 @@ void	*quantum_compiler(void *arg)
+ 		if (status == CODER_INIT || status == REFACTORING_COMPLETED)
+ 			enqueue_coder(coder);
+ 		else if (status == WAITING_DONGLE)
+-			take_dongle(coder);
++			take_dongles(coder);
+ 		else if (status == TAKING_DONGLE)
+ 			compile_init(coder);
+ 		else if (status == COMPILING_COMPLETED)
+diff --git a/src/core/dongle.c b/src/core/dongle.c
+index 3622b2c..02e9e12 100644
+--- a/src/core/dongle.c
++++ b/src/core/dongle.c
+@@ -6,7 +6,7 @@
+ /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
+ /*                                                +#+#+#+#+#+   +#+           */
+ /*   Created: 2026/08/22 10:26:13 by jbarreir          #+#    #+#             */
+-/*   Updated: 2026/09/15 19:13:26 by jbarreir         ###   ########.fr       */
++/*   Updated: 2026/09/28 18:51:34 by jbarreir         ###   ########.fr       */
+ /*                                                                            */
+ /* ************************************************************************** */
+ 
+@@ -56,12 +56,19 @@ void	lock_dongles_in_order(t_coder *coder)
+ 
+ void	unlock_dongles(t_coder *coder)
+ {
+-	if (coder->usb_right)
+-		pthread_cond_broadcast(&coder->usb_right->cond);
+-	if (coder->usb_left)
+-		pthread_cond_broadcast(&coder->usb_left->cond);
+-	if (coder->usb_right)
+-		pthread_mutex_unlock(&coder->usb_right->lock);
+-	if (coder->usb_left)
+-		pthread_mutex_unlock(&coder->usb_left->lock);
++	pthread_cond_broadcast(&coder->usb_right->cond);
++	pthread_cond_broadcast(&coder->usb_left->cond);
++	pthread_mutex_unlock(&coder->usb_right->lock);
++	pthread_mutex_unlock(&coder->usb_left->lock);
++}
++
++void	dongle_cooldown(t_coder *coder)
++{
++	long long			time;
++
++	time = timer(coder->sim);
++	coder->usb_right->last_compile_time = time;
++	coder->usb_left->last_compile_time = time;
++	coder->usb_right->status = COOLING_DOWN;
++	coder->usb_left->status = COOLING_DOWN;
+ }
+diff --git a/src/core/free_memory.c b/src/core/free_memory.c
+new file mode 100644
+index 0000000..1a7f2a7
+--- /dev/null
++++ b/src/core/free_memory.c
+@@ -0,0 +1,38 @@
++/* ************************************************************************** */
++/*                                                                            */
++/*                                                        :::      ::::::::   */
++/*   free_memory.c                                      :+:      :+:    :+:   */
++/*                                                    +:+ +:+         +:+     */
++/*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
++/*                                                +#+#+#+#+#+   +#+           */
++/*   Created: 2026/08/25 17:16:45 by jbarreir          #+#    #+#             */
++/*   Updated: 2026/09/28 19:58:20 by jbarreir         ###   ########.fr       */
++/*                                                                            */
++/* ************************************************************************** */
++
++#include "codexion.h"
++
++t_status	free_all_memory(t_simulation *sim, t_status status, int i)
++{
++	while (--i >= 0)
++	{
++		if (sim->hub && sim->hub[i])
++		{
++			pthread_destroy_coder(sim->hub[i]);
++			free(sim->hub[i]);
++		}
++		if (sim->quantum && sim->quantum[i])
++		{
++			pthread_destroy_dongle(sim->quantum[i]);
++			free(sim->quantum[i]);
++		}
++	}
++	if (sim->hub)
++		free(sim->hub);
++	if (sim->quantum)
++		free(sim->quantum);
++	free_logs(&sim->printer, true);
++	pthread_destroy_monitor(&sim->monitor);
++	pthread_destroy_printer(&sim->printer);
++	return (status);
++}
+diff --git a/src/init/init.c b/src/core/init_data.c
+similarity index 72%
+rename from src/init/init.c
+rename to src/core/init_data.c
+index ddb477b..abf900d 100644
+--- a/src/init/init.c
++++ b/src/core/init_data.c
+@@ -1,18 +1,39 @@
+ /* ************************************************************************** */
+ /*                                                                            */
+ /*                                                        :::      ::::::::   */
+-/*   init.c                                             :+:      :+:    :+:   */
++/*   init_data.c                                        :+:      :+:    :+:   */
+ /*                                                    +:+ +:+         +:+     */
+ /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
+ /*                                                +#+#+#+#+#+   +#+           */
+ /*   Created: 2026/08/19 10:55:55 by jbarreir          #+#    #+#             */
+-/*   Updated: 2026/09/15 19:13:05 by jbarreir         ###   ########.fr       */
++/*   Updated: 2026/09/28 18:25:03 by jbarreir         ###   ########.fr       */
+ /*                                                                            */
+ /* ************************************************************************** */
+ 
+ #include "codexion.h"
+ 
+-t_coder	*init_coder(t_simulation *sim, int id)
++void	init_sim_data(t_simulation *sim)
++{
++	sim->monitor.sim = sim;
++	sim->monitor.has_thread = false;
++	sim->printer.sim = sim;
++	sim->printer.has_lock = false;
++	sim->printer.has_cond = false;
++	sim->printer.print = false;
++	sim->printer.head_log = NULL;
++	sim->printer.last_printed = NULL;
++	sim->has_lock = false;
++	sim->has_log = false;
++	sim->has_start_lock = false;
++	sim->has_start_cond = false;
++	sim->is_started = false;
++	sim->hub = NULL;
++	sim->quantum = NULL;
++	sim->n_coders = 0;
++	sim->n_dongles = 0;
++}
++
++static t_coder	*init_coder(t_simulation *sim, int id)
+ {
+ 	t_coder				*coder;
+ 
+@@ -37,7 +58,7 @@ t_coder	*init_coder(t_simulation *sim, int id)
+ 	return (coder);
+ }
+ 
+-t_dongle	*init_usb(t_simulation *sim, int id)
++static t_dongle	*init_usb(t_simulation *sim, int id)
+ {
+ 	t_dongle			*usb;
+ 
+@@ -57,12 +78,15 @@ t_dongle	*init_usb(t_simulation *sim, int id)
+ 	if (!pthread_cond_init(&usb->cond, NULL))
+ 		usb->has_cond = true;
+ 	if (usb->has_lock == false || usb->has_cond == false)
++	{
++		free(usb);
+ 		return (NULL);
++	}
+ 	sim->n_dongles++;
+ 	return (usb);
+ }
+ 
+-void	link_coders_and_usbs(t_coder **hub, int number_of_coders)
++static void	link_coders_and_usbs(t_coder **hub, int number_of_coders)
+ {
+ 	int					i;
+ 	int					prev_idx;
+@@ -89,22 +113,22 @@ t_status	init_coworking(t_simulation *sim)
+ 	int					i;
+ 	int					n;
+ 
+-	n = sim->number_of_coders;
++	n = sim->n_coders;
+ 	sim->quantum = (t_dongle **)malloc(sizeof(t_dongle *) * (n + 1));
+ 	if (!sim->quantum)
+ 		return (MALLOC_ERR);
+ 	sim->hub = (t_coder **)malloc(sizeof(t_coder *) * (n + 1));
+ 	if (!sim->hub)
+-		return (MALLOC_ERR);
++		return (free_all_memory(sim, MALLOC_ERR, 0));
+ 	i = -1;
+ 	while (++i < n)
+ 	{
+ 		sim->hub[i] = init_coder(sim, i);
+ 		if (!sim->hub[i])
+-			return (MALLOC_ERR);
++			return (free_all_memory(sim, MALLOC_ERR, i + 1));
+ 		sim->quantum[i] = init_usb(sim, i);
+ 		if (!sim->quantum[i])
+-			return (MALLOC_ERR);
++			return (free_all_memory(sim, MALLOC_ERR, i + 1));
+ 		sim->hub[i]->usb_right = sim->quantum[i];
+ 	}
+ 	sim->hub[i] = NULL;
+diff --git a/src/core/safe_locks.c b/src/core/safe_locks.c
+deleted file mode 100644
+index 16ad030..0000000
+--- a/src/core/safe_locks.c
++++ /dev/null
+@@ -1,60 +0,0 @@
+-/* ************************************************************************** */
+-/*                                                                            */
+-/*                                                        :::      ::::::::   */
+-/*   safe_locks.c                                       :+:      :+:    :+:   */
+-/*                                                    +:+ +:+         +:+     */
+-/*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
+-/*                                                +#+#+#+#+#+   +#+           */
+-/*   Created: 2026/08/24 14:26:38 by jbarreir          #+#    #+#             */
+-/*   Updated: 2026/08/25 13:44:28 by jbarreir         ###   ########.fr       */
+-/*                                                                            */
+-/* ************************************************************************** */
+-
+-#include "codexion.h"
+-
+-bool	sim_lock_and_access(t_simulation *sim, t_status status, bool update)
+-{
+-	bool				result;
+-
+-	pthread_mutex_lock(&sim->lock);
+-	if (sim->status == status)
+-		result = true;
+-	else
+-		result = false;
+-	if (update && sim->status != SHUTDOWN_SIGNAL)
+-		sim->status = status;
+-	pthread_mutex_unlock(&sim->lock);
+-	return (result);
+-}
+-
+-bool	coder_lock_and_access(t_coder *coder, t_status status, bool update,
+-								bool unlock)
+-{
+-	bool				result;
+-
+-	pthread_mutex_lock(&coder->lock);
+-	if (coder->status == status)
+-		result = true;
+-	else
+-		result = false;
+-	if (update && coder->status != BURNOUT)
+-		coder->status = status;
+-	if (unlock)
+-		pthread_mutex_unlock(&coder->lock);
+-	return (result);
+-}
+-
+-bool	usb_lock_and_access(t_dongle *usb, t_status status, bool update)
+-{
+-	bool				result;
+-
+-	pthread_mutex_lock(&usb->lock);
+-	if (usb->status == status)
+-		result = true;
+-	else
+-		result = false;
+-	if (update)
+-		usb->status = status;
+-	pthread_mutex_unlock(&usb->lock);
+-	return (result);
+-}
+diff --git a/src/core/solo_coder.c b/src/core/solo_coder.c
+index b8fcc74..ae7bf29 100644
+--- a/src/core/solo_coder.c
++++ b/src/core/solo_coder.c
+@@ -6,7 +6,7 @@
+ /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
+ /*                                                +#+#+#+#+#+   +#+           */
+ /*   Created: 2026/09/15 19:15:29 by jbarreir          #+#    #+#             */
+-/*   Updated: 2026/09/15 19:41:25 by jbarreir         ###   ########.fr       */
++/*   Updated: 2026/09/28 19:03:48 by jbarreir         ###   ########.fr       */
+ /*                                                                            */
+ /* ************************************************************************** */
+ 
+@@ -19,9 +19,9 @@ void	*solo_coder(t_coder *coder)
+ 	pthread_mutex_unlock(&coder->usb_right->lock);
+ 	pthread_mutex_lock(&coder->lock);
+ 	coder->status = TAKING_DONGLE;
+-	print_log(coder, timer(&coder->sim->start), false);
++	printf("%lld %d has taken a dongle\n", timer(coder->sim), coder->id);
+ 	pthread_mutex_unlock(&coder->lock);
+-	while (!sim_lock_and_access(coder->sim, SHUTDOWN_SIGNAL, false))
++	while (!sim_lock_and_access(coder->sim, SHUTDOWN, false))
+ 		usleep(SLEEP_INTERVAL);
+ 	return (NULL);
+ }
+diff --git a/src/core/start_sequence.c b/src/core/start_sequence.c
+new file mode 100644
+index 0000000..2b90cce
+--- /dev/null
++++ b/src/core/start_sequence.c
+@@ -0,0 +1,40 @@
++/* ************************************************************************** */
++/*                                                                            */
++/*                                                        :::      ::::::::   */
++/*   start_sequence.c                                   :+:      :+:    :+:   */
++/*                                                    +:+ +:+         +:+     */
++/*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
++/*                                                +#+#+#+#+#+   +#+           */
++/*   Created: 2026/09/24 09:58:27 by jbarreir          #+#    #+#             */
++/*   Updated: 2026/09/28 18:30:06 by jbarreir         ###   ########.fr       */
++/*                                                                            */
++/* ************************************************************************** */
++
++#include "codexion.h"
++
++void	wait_for_start_sequence(t_simulation *sim)
++{
++	pthread_mutex_lock(&sim->start_lock);
++	while (!sim->is_started)
++		pthread_cond_wait(&sim->start_cond, &sim->start_lock);
++	pthread_mutex_unlock(&sim->start_lock);
++}
++
++void	start_sequence(t_simulation *sim)
++{
++	gettimeofday(&sim->start_time, NULL);
++	pthread_mutex_lock(&sim->start_lock);
++	sim->is_started = true;
++	pthread_cond_broadcast(&sim->start_cond);
++	pthread_mutex_unlock(&sim->start_lock);
++}
++
++t_status	abort_start_sequence(t_simulation *sim, t_status status)
++{
++	sim_lock_and_access(sim, SHUTDOWN, true);
++	pthread_mutex_lock(&sim->start_lock);
++	sim->is_started = true;
++	pthread_cond_broadcast(&sim->start_cond);
++	pthread_mutex_unlock(&sim->start_lock);
++	return (status);
++}
+diff --git a/src/init/memory.c b/src/init/memory.c
+deleted file mode 100644
+index b73504f..0000000
+--- a/src/init/memory.c
++++ /dev/null
+@@ -1,52 +0,0 @@
+-/* ************************************************************************** */
+-/*                                                                            */
+-/*                                                        :::      ::::::::   */
+-/*   memory.c                                           :+:      :+:    :+:   */
+-/*                                                    +:+ +:+         +:+     */
+-/*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
+-/*                                                +#+#+#+#+#+   +#+           */
+-/*   Created: 2026/08/25 17:16:45 by jbarreir          #+#    #+#             */
+-/*   Updated: 2026/08/26 11:20:56 by jbarreir         ###   ########.fr       */
+-/*                                                                            */
+-/* ************************************************************************** */
+-
+-#include "codexion.h"
+-
+-void	free_coders(t_coder **hub, int i)
+-{
+-	while (--i >= 0)
+-	{
+-		if (hub[i]->has_thread)
+-			pthread_join(hub[i]->thread, NULL);
+-		if (hub[i]->has_lock)
+-			pthread_mutex_destroy(&hub[i]->lock);
+-		free(hub[i]);
+-	}
+-	free(hub);
+-}
+-
+-void	free_quantum(t_dongle **quantum, int i)
+-{
+-	while (--i >= 0)
+-	{
+-		if (quantum[i]->has_lock)
+-			pthread_mutex_destroy(&quantum[i]->lock);
+-		if (quantum[i]->has_cond)
+-			pthread_cond_destroy(&quantum[i]->cond);
+-		free(quantum[i]);
+-	}
+-	free(quantum);
+-}
+-
+-void	free_hub_memory(t_simulation *sim)
+-{
+-	if (sim->monitor.has_thread)
+-		pthread_join(sim->monitor.thread, NULL);
+-	free_coders(sim->hub, sim->n_coders);
+-	free_quantum(sim->quantum, sim->n_dongles);
+-	if (sim->has_lock)
+-		pthread_mutex_destroy(&sim->lock);
+-	if (sim->has_log)
+-		pthread_mutex_destroy(&sim->log);
+-	sim->status = SUCCESS;
+-}
+diff --git a/src/main.c b/src/main.c
+index 0fe88fa..48c7071 100644
+--- a/src/main.c
++++ b/src/main.c
+@@ -6,7 +6,7 @@
+ /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
+ /*                                                +#+#+#+#+#+   +#+           */
+ /*   Created: 2026/08/13 09:29:04 by jbarreir          #+#    #+#             */
+-/*   Updated: 2026/09/15 08:03:40 by jbarreir         ###   ########.fr       */
++/*   Updated: 2026/09/28 18:40:18 by jbarreir         ###   ########.fr       */
+ /*                                                                            */
+ /* ************************************************************************** */
+ 
+@@ -16,22 +16,16 @@ int	main(int argc, char **argv)
+ {
+ 	t_simulation		sim;
+ 
+-	sim.monitor.sim = &sim;
+-	sim.has_lock = false;
+-	sim.has_log = false;
+-	sim.hub = NULL;
+-	sim.quantum = NULL;
+-	sim.n_coders = 0;
+-	sim.n_dongles = 0;
++	init_sim_data(&sim);
+ 	sim.status = parse_rules(&sim, argc, argv);
+ 	if (sim.status != PARSING_COMPLETED)
+ 		return (sim.status);
++	if (sim.compiles_required == 0)
++		return (SUCCESS);
+ 	sim.status = init_coworking(&sim);
+ 	if (sim.status == MALLOC_ERR)
+ 		return (print_err(MALLOC_ERR, MALLOC_ERR_MSG, &sim, true));
+-	gettimeofday(&sim.start, NULL);
+ 	if (init_threads(&sim) != INIT_SIMULATION)
+ 		return (print_err(INIT_THREADS_ERR, THREAD_ERR_MSG, &sim, true));
+-	free_hub_memory(&sim);
+-	return (sim.status);
++	return (free_all_memory(&sim, SUCCESS, sim.n_coders));
+ }
+diff --git a/src/monitor/monitor.c b/src/monitor/monitor.c
+index d9484f8..1f7f5fe 100644
+--- a/src/monitor/monitor.c
++++ b/src/monitor/monitor.c
+@@ -6,79 +6,74 @@
+ /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
+ /*                                                +#+#+#+#+#+   +#+           */
+ /*   Created: 2026/08/20 14:52:04 by jbarreir          #+#    #+#             */
+-/*   Updated: 2026/09/15 08:10:16 by jbarreir         ###   ########.fr       */
++/*   Updated: 2026/09/28 19:54:20 by jbarreir         ###   ########.fr       */
+ /*                                                                            */
+ /* ************************************************************************** */
+ 
+ #include "codexion.h"
+ 
+-void	update_cooldown(t_dongle *usb, struct timeval *start)
++static t_status check_coder(t_coder *coder)
+ {
+-	long long			now;
++	t_status			status;
+ 
+-	pthread_mutex_lock(&usb->lock);
+-	if (usb->status == COOLING_DOWN)
++	status = SHUTDOWN;
++	pthread_mutex_lock(&coder->lock);
++	if (coder->status != ALL_COMPILES_COMPLETED && (coder->status == BURNOUT
++		|| am_i_burnt(coder)))
+ 	{
+-		now = timer(start);
+-		if (now >= usb->last_compile_time + usb->sim->dongle_cooldown)
+-		{
+-			usb->status = AVAILABLE;
+-			pthread_cond_broadcast(&usb->cond);
+-		}
++		if (!append_log(coder, timer(coder->sim)))
++			return (exit_code_unlock(coder, MALLOC_ERR, false));
++		status = SHUTDOWN;
+ 	}
+-	pthread_mutex_unlock(&usb->lock);
++	else if (coder->status != ALL_COMPILES_COMPLETED)
++		status = COMPILING;
++	pthread_mutex_unlock(&coder->lock);
++	return (status);
+ }
+ 
+-t_status	check_coder_status_and_cooldown(t_simulation *sim)
++static t_status check_hub(t_simulation *sim)
+ {
+ 	int					i;
+-	long long			now;
+-	t_status			status;
+ 
+ 	i = -1;
+-	status = SHUTDOWN_SIGNAL;
+-	now = timer(&sim->start);
+-	while (++i < sim->number_of_coders)
++	while (++i < sim->n_coders)
+ 	{
+-		update_cooldown(sim->quantum[i], &sim->start);
+-		pthread_mutex_lock(&sim->hub[i]->lock);
+-		if (sim->hub[i]->status != ALL_COMPILES_COMPLETED
+-			&& now >= sim->hub[i]->last_compile_start + sim->time_to_burnout)
+-		{
+-			sim->hub[i]->status = BURNOUT;
+-			print_log(sim->hub[i], now, false);
+-			pthread_mutex_unlock(&sim->hub[i]->lock);
+-			return (SHUTDOWN_SIGNAL);
+-		}
+-		else if (sim->hub[i]->status != ALL_COMPILES_COMPLETED)
+-			status = COMPILING;
+-		pthread_mutex_unlock(&sim->hub[i]->lock);
++		update_cooldown(sim->quantum[i], sim);
++		if (check_coder(sim->hub[i]) == SHUTDOWN)
++			return (SHUTDOWN);
++	}
++	return (COMPILING);
++}
++
++static void	wake_dongles(t_monitor *monitor)
++{
++	int					i;
++
++	i = -1;
++	while (++i < monitor->sim->n_coders)
++	{
++		pthread_mutex_lock(&monitor->sim->quantum[i]->lock);
++		pthread_cond_broadcast(&monitor->sim->quantum[i]->cond);
++		pthread_mutex_unlock(&monitor->sim->quantum[i]->lock);
+ 	}
+-	return (status);
+ }
+ 
+ void	*monitor_routine(void *arg)
+ {
+ 	t_monitor			*monitor;
+ 	t_status			status;
+-	int					i;
+ 
+ 	monitor = (t_monitor *)arg;
++	wait_for_start_sequence(monitor->sim);
+ 	status = AVAILABLE;
+-	while (status != SHUTDOWN_SIGNAL)
++	while (status != SHUTDOWN)
+ 	{
+-		status = check_coder_status_and_cooldown(monitor->sim);
+-		if (status == SHUTDOWN_SIGNAL)
++		status = check_hub(monitor->sim);
++		if (status == SHUTDOWN)
+ 			sim_lock_and_access(monitor->sim, status, true);
+ 		else
+ 			usleep(MONITOR_SLEEP);
+ 	}
+-	i = -1;
+-	while (++i < monitor->sim->number_of_coders)
+-	{
+-		pthread_mutex_lock(&monitor->sim->quantum[i]->lock);
+-		pthread_cond_broadcast(&monitor->sim->quantum[i]->cond);
+-		pthread_mutex_unlock(&monitor->sim->quantum[i]->lock);
+-	}
++	wake_dongles(monitor);
+ 	return (NULL);
+ }
+diff --git a/src/printer/printer.c b/src/printer/printer.c
+new file mode 100644
+index 0000000..15dafb7
+--- /dev/null
++++ b/src/printer/printer.c
+@@ -0,0 +1,146 @@
++/* ************************************************************************** */
++/*                                                                            */
++/*                                                        :::      ::::::::   */
++/*   printer.c                                          :+:      :+:    :+:   */
++/*                                                    +:+ +:+         +:+     */
++/*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
++/*                                                +#+#+#+#+#+   +#+           */
++/*   Created: 2026/09/28 12:02:13 by jbarreir          #+#    #+#             */
++/*   Updated: 2026/09/28 19:59:40 by jbarreir         ###   ########.fr       */
++/*                                                                            */
++/* ************************************************************************** */
++
++#include "codexion.h"
++
++bool	init_printer(t_printer *printer, t_simulation *sim)
++{
++	printer->sim = sim;
++	printer->has_lock = false;
++	printer->has_cond = false;
++	printer->print = false;
++	printer->head_log = NULL;
++	printer->last_printed = NULL;
++	if (!pthread_mutex_init(&printer->lock, NULL))
++		printer->has_lock = true;
++	if (!pthread_cond_init(&printer->cond, NULL))
++		printer->has_cond = true;
++	return (printer->has_lock && printer->has_cond);
++}
++
++t_log	*create_log(long long time, t_status status, int coder_id)
++{
++	t_log				*new_log;
++
++	new_log = (t_log *)malloc(sizeof(t_log));
++	if (!new_log)
++		return (NULL);
++	new_log->time = time;
++	new_log->status = status;
++	new_log->coder_id = coder_id;
++	return (new_log);
++}
++
++bool	append_log(t_coder *coder, long long time)
++{
++	t_log				*new_log;
++	t_log				*ptr;
++
++	new_log = create_log(time, coder->status, coder->id);
++	if (!new_log)
++		return (false);
++	pthread_mutex_lock(&coder->sim->printer.lock);
++	ptr = coder->sim->printer.head_log;
++	if (!ptr)
++		coder->sim->printer.head_log = new_log;
++	else
++	{
++		while (ptr->next)
++			ptr = ptr->next;
++		ptr->next = new_log;
++	}
++	coder->sim->printer.print = true;
++	pthread_cond_broadcast(&coder->sim->printer.cond);
++	pthread_mutex_unlock(&coder->sim->printer.lock);
++	return (true);
++}
++
++void	free_logs(t_printer *printer, bool free_all)
++{
++	t_log				*ptr;
++	t_log				*next;
++
++	ptr = printer->head_log;
++	next = NULL;
++	while (ptr)
++	{
++		if (!free_all && ptr == printer->last_printed)
++		{
++			free(ptr);
++			printer->head_log = NULL;
++			printer->last_printed = NULL;
++			break ;
++		}
++		if (ptr->next)
++			next = ptr->next;
++		free(ptr);
++		if (next)
++			ptr = next;
++	}
++}
++
++static void	dequeue_logs(t_printer *printer)
++{
++	pthread_mutex_lock(&printer->lock);
++	free_logs(printer, false);
++	printer->head_log = printer->last_printed;
++	pthread_mutex_unlock(&printer->lock);
++}
++
++static void	print_log(t_log *log)
++{
++	if (log->status == TAKING_DONGLE)
++	{
++		printf("%lld %d has taken a dongle\n", log->time, log->coder_id);
++		fflush(stdout);
++		printf("%lld %d has taken a dongle\n", log->time, log->coder_id);
++	}
++	else if (log->status == COMPILING)
++		printf("%lld %d is compiling\n", log->time, log->coder_id);
++	else if (log->status == DEBUGGING)
++		printf("%lld %d is debugging\n", log->time, log->coder_id);
++	else if (log->status == REFACTORING)
++		printf("%lld %d is refactoring\n", log->time, log->coder_id);
++	fflush(stdout);
++}
++
++static void	print_log_sequence(t_printer *printer)
++{
++	t_log				*ptr;
++
++	ptr = printer->head_log;
++	while (ptr)
++	{
++		print_log(ptr);
++		printer->last_printed = ptr;
++		ptr = ptr->next;
++	}
++}
++
++void	*printer_routine(void *arg)
++{
++	t_printer			*printer;
++
++	printer = (t_printer *)arg;
++	wait_for_start_sequence(printer->sim);
++	while (printer->head_log
++			|| !sim_lock_and_access(printer->sim, SHUTDOWN, false))
++	{
++		pthread_mutex_lock(&printer->lock);
++		while (!printer->print)
++			pthread_cond_wait(&printer->cond, &printer->lock);
++		pthread_mutex_unlock(&printer->lock);
++		print_log_sequence(printer);
++		dequeue_logs(printer);
++	}
++	return (NULL);
++}
+diff --git a/src/pthreads/destroy_pthreads.c b/src/pthreads/destroy_pthreads.c
+new file mode 100644
+index 0000000..60496ba
+--- /dev/null
++++ b/src/pthreads/destroy_pthreads.c
+@@ -0,0 +1,57 @@
++/* ************************************************************************** */
++/*                                                                            */
++/*                                                        :::      ::::::::   */
++/*   destroy_pthreads.c                                 :+:      :+:    :+:   */
++/*                                                    +:+ +:+         +:+     */
++/*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
++/*                                                +#+#+#+#+#+   +#+           */
++/*   Created: 2026/09/28 16:59:58 by jbarreir          #+#    #+#             */
++/*   Updated: 2026/09/28 17:38:13 by jbarreir         ###   ########.fr       */
++/*                                                                            */
++/* ************************************************************************** */
++
++#include "codexion.h"
++
++void	pthread_destroy_coder(t_coder *coder)
++{
++	if (coder->has_thread)
++		pthread_join(coder->thread, NULL);
++	if (coder->has_lock)
++		pthread_mutex_destroy(&coder->lock);
++}
++
++void	pthread_destroy_dongle(t_dongle *dongle)
++{
++	if (dongle->has_lock)
++		pthread_mutex_destroy(&dongle->lock);
++	if (dongle->has_cond)
++		pthread_cond_destroy(&dongle->cond);
++}
++
++void	pthread_destroy_monitor(t_monitor *monitor)
++{
++	if (monitor->has_thread)
++		pthread_join(monitor->thread, NULL);
++}
++
++void	pthread_destroy_printer(t_printer *printer)
++{
++	if (printer->has_thread)
++		pthread_join(printer->thread, NULL);
++	if (printer->has_lock)
++		pthread_mutex_destroy(&printer->lock);
++	if (printer->has_cond)
++		pthread_cond_destroy(&printer->cond);
++}
++
++void	pthread_destroy_sim(t_simulation *sim)
++{
++	if (sim->has_lock)
++		pthread_mutex_destroy(&sim->lock);
++	if (sim->has_log)
++		pthread_mutex_destroy(&sim->log);
++	if (sim->has_start_lock)
++		pthread_mutex_destroy(&sim->start_lock);
++	if (sim->has_start_cond)
++		pthread_cond_destroy(&sim->start_cond);
++}
+diff --git a/src/init/threads.c b/src/pthreads/init_pthreads.c
+similarity index 53%
+rename from src/init/threads.c
+rename to src/pthreads/init_pthreads.c
+index f9bb7df..b6ee2b0 100644
+--- a/src/init/threads.c
++++ b/src/pthreads/init_pthreads.c
+@@ -1,68 +1,62 @@
+ /* ************************************************************************** */
+ /*                                                                            */
+ /*                                                        :::      ::::::::   */
+-/*   threads.c                                          :+:      :+:    :+:   */
++/*   init_pthreads.c                                    :+:      :+:    :+:   */
+ /*                                                    +:+ +:+         +:+     */
+ /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
+ /*                                                +#+#+#+#+#+   +#+           */
+ /*   Created: 2026/08/19 13:09:10 by jbarreir          #+#    #+#             */
+-/*   Updated: 2026/08/31 10:52:18 by jbarreir         ###   ########.fr       */
++/*   Updated: 2026/09/28 18:34:14 by jbarreir         ###   ########.fr       */
+ /*                                                                            */
+ /* ************************************************************************** */
+ 
+ #include "codexion.h"
+ 
+-t_status	init_threads(t_simulation *sim)
++static t_status	init_sim_pthread(t_simulation *sim)
+ {
+-	int					i;
+-
+ 	if (pthread_mutex_init(&sim->log, NULL))
+ 		return (INIT_LOG_ERR);
+ 	sim->has_log = true;
+ 	if (pthread_mutex_init(&sim->lock, NULL))
+ 		return (INIT_SIM_LOCK_ERR);
+ 	sim->has_lock = true;
+-	i = -1;
+-	while (++i < sim->number_of_coders)
+-	{
+-		if (pthread_create(&sim->hub[i]->thread, NULL, quantum_compiler,
+-				sim->hub[i]))
+-			return (INIT_THREADS_ERR);
+-		sim->hub[i]->has_thread = true;
+-	}
+-	sim->monitor.has_thread = false;
+-	if (pthread_create(&sim->monitor.thread, NULL, monitor_routine,
+-			&sim->monitor))
+-		return (INIT_MONITOR_ERR);
+-	sim->monitor.has_thread = true;
++	if (pthread_mutex_init(&sim->start_lock, NULL))
++		return (INIT_START_COND_ERR);
++	sim->has_start_lock = true;
++	if (pthread_cond_init(&sim->start_cond, NULL))
++		return (INIT_START_COND_ERR);
++	sim->has_start_cond = true;
++	if (!pthread_mutex_init(&sim->printer.lock, NULL))
++		return (INIT_PRINTER_ERR);
++	sim->printer.has_lock = true;
++	if (!pthread_cond_init(&sim->printer.cond, NULL))
++		return (INIT_PRINTER_ERR);
++	sim->printer.has_cond = true;
+ 	return (INIT_SIMULATION);
+ }
+ 
+-void	join_threads_and_destroy_mutex_cond(t_simulation *sim)
++t_status	init_threads(t_simulation *sim)
+ {
+ 	int					i;
+ 
+-	if (!sim)
+-		return ;
++	sim->status = init_sim_pthread(sim);
++	if (sim->status != INIT_SIMULATION)
++		return (sim->status);
+ 	i = -1;
+-	while (++i < sim->number_of_coders)
++	while (++i < sim->n_coders)
+ 	{
+-		if (sim->hub && sim->hub[i])
+-		{
+-			pthread_join(sim->hub[i]->thread, NULL);
+-			pthread_mutex_destroy(&sim->hub[i]->lock);
+-		}
+-	}
+-	pthread_join(sim->monitor.thread, NULL);
+-	i = -1;
+-	while (++i < sim->number_of_coders)
+-	{
+-		if (sim->quantum && sim->quantum[i])
+-		{
+-			pthread_mutex_destroy(&sim->quantum[i]->lock);
+-			pthread_cond_destroy(&sim->quantum[i]->cond);
+-		}
++		if (pthread_create(&sim->hub[i]->thread, NULL, quantum_compiler,
++						   sim->hub[i]))
++			return (abort_start_sequence(sim, INIT_THREADS_ERR));
++		sim->hub[i]->has_thread = true;
+ 	}
+-	pthread_mutex_destroy(&sim->lock);
+-	pthread_mutex_destroy(&sim->log);
++	if (pthread_create(&sim->monitor.thread, NULL, monitor_routine,
++			&sim->monitor))
++		return (abort_start_sequence(sim, INIT_MONITOR_ERR));
++	if (pthread_create(&sim->printer.thread, NULL, printer_routine,
++			&sim->monitor))
++		return (abort_start_sequence(sim, INIT_PRINTER_ERR));
++	sim->printer.has_thread = true;
++	start_sequence(sim);
++	return (INIT_SIMULATION);
+ }
+diff --git a/src/scheduler/scheduler.c b/src/scheduler/scheduler.c
+index 560a8b9..75d803a 100644
+--- a/src/scheduler/scheduler.c
++++ b/src/scheduler/scheduler.c
+@@ -6,7 +6,7 @@
+ /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
+ /*                                                +#+#+#+#+#+   +#+           */
+ /*   Created: 2026/08/20 10:45:52 by jbarreir          #+#    #+#             */
+-/*   Updated: 2026/09/14 17:12:07 by jbarreir         ###   ########.fr       */
++/*   Updated: 2026/09/23 11:23:53 by jbarreir         ###   ########.fr       */
+ /*                                                                            */
+ /* ************************************************************************** */
+ 
+@@ -69,6 +69,15 @@ void	enqueue_coder(t_coder *coder)
+ 		edf_scheduler(coder->usb_left->queue, coder);
+ 	}
+ 	unlock_dongles(coder);
+-	coder->status = WAITING_DONGLE;
++	if (!am_i_burnt(coder))
++		coder->status = WAITING_DONGLE;
+ 	pthread_mutex_unlock(&coder->lock);
+ }
++
++void	dequeue_dongles(t_coder *coder)
++{
++	coder->usb_right->status = PLUGGED;
++	coder->usb_left->status = PLUGGED;
++	dequeue(coder->usb_right->queue);
++	dequeue(coder->usb_left->queue);
++}
+diff --git a/src/utils/arg_parser.c b/src/utils/arg_parser.c
+index d312ad1..6b950bb 100644
+--- a/src/utils/arg_parser.c
++++ b/src/utils/arg_parser.c
+@@ -6,33 +6,33 @@
+ /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
+ /*                                                +#+#+#+#+#+   +#+           */
+ /*   Created: 2026/08/18 13:22:11 by jbarreir          #+#    #+#             */
+-/*   Updated: 2026/09/16 08:47:23 by jbarreir         ###   ########.fr       */
++/*   Updated: 2026/09/28 18:09:38 by jbarreir         ###   ########.fr       */
+ /*                                                                            */
+ /* ************************************************************************** */
+ 
+ #include "codexion.h"
+ 
+-int	isalldigits(char *str)
++static t_status	check_digits(char *str)
+ {
+ 	if (!str || *str == '\0')
+ 		return (0);
+ 	while (*str)
+ 	{
+ 		if (*str < '0' || *str > '9')
+-			return (0);
++			return (ARG_NUM_ERR);
+ 		str++;
+ 	}
+-	return (1);
++	return (SUCCESS);
+ }
+ 
+-int	int_validator(char **argv, int *arr)
++static t_status	int_validator(char **argv, int *arr)
+ {
+ 	int					i;
+ 
+ 	i = -1;
+ 	while (++i < 7)
+ 	{
+-		if (!isalldigits(argv[i]))
++		if (check_digits(argv[i]))
+ 			return (print_err(ARG_NUM_ERR, ARG_NUM_ERR_MSG, NULL, false));
+ 		arr[i] = atoi(argv[i]);
+ 		if (arr[i] < 0)
+@@ -41,7 +41,7 @@ int	int_validator(char **argv, int *arr)
+ 	return (SUCCESS);
+ }
+ 
+-int	parse_rules(t_simulation *sim, int argc, char **argv)
++t_status	parse_rules(t_simulation *sim, int argc, char **argv)
+ {
+ 	int					validator;
+ 	int					arr[7];
+@@ -53,7 +53,7 @@ int	parse_rules(t_simulation *sim, int argc, char **argv)
+ 		return (validator);
+ 	if (arr[0] < 1 || arr[0] > MAX_CODERS)
+ 		return (print_err(MAX_COD_ERR, MAX_COD_ERR_MSG, sim, false));
+-	sim->number_of_coders = arr[0];
++	sim->n_coders = arr[0];
+ 	sim->time_to_burnout = arr[1];
+ 	sim->time_to_compile = arr[2];
+ 	sim->time_to_debug = arr[3];
+diff --git a/src/utils/awareness.c b/src/utils/awareness.c
+new file mode 100644
+index 0000000..d33f205
+--- /dev/null
++++ b/src/utils/awareness.c
+@@ -0,0 +1,62 @@
++/* ************************************************************************** */
++/*                                                                            */
++/*                                                        :::      ::::::::   */
++/*   awareness.c                                        :+:      :+:    :+:   */
++/*                                                    +:+ +:+         +:+     */
++/*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
++/*                                                +#+#+#+#+#+   +#+           */
++/*   Created: 2026/09/22 15:49:46 by jbarreir          #+#    #+#             */
++/*   Updated: 2026/09/28 20:07:46 by jbarreir         ###   ########.fr       */
++/*                                                                            */
++/* ************************************************************************** */
++
++#include "codexion.h"
++
++bool	am_i_burnt(t_coder *coder)
++{
++	long long			now;
++	bool				result;
++
++	if (coder->status == BURNOUT)
++		return (true);
++	now = timer(coder->sim);
++	result = false;
++	if (coder->last_compile_start + coder->sim->time_to_burnout <= now)
++	{
++		coder->status = BURNOUT;
++		result = true;
++	}
++	return (result);
++}
++
++void	have_i_finished(t_coder *coder)
++{
++	int					completed;
++	int					required;
++
++	pthread_mutex_lock(&coder->lock);
++	completed = coder->completed_compiles;
++	required = coder->sim->compiles_required;
++	if (!am_i_burnt(coder))
++	{
++		if (completed >= required)
++			coder->status = ALL_COMPILES_COMPLETED;
++		else
++			coder->status = REFACTORING_COMPLETED;
++	}
++	pthread_mutex_unlock(&coder->lock);
++}
++
++bool	up_and_running(t_coder *coder)
++{
++	bool				result;
++
++	result = true;
++	if (sim_lock_and_access(coder->sim, SHUTDOWN, false))
++		result = false;
++	pthread_mutex_lock(&coder->lock);
++	if (am_i_burnt(coder))
++		result = false;
++	pthread_mutex_unlock(&coder->lock);
++	return (result);
++}
+diff --git a/src/utils/utils.c b/src/utils/utils.c
+index de397ab..02f5140 100644
+--- a/src/utils/utils.c
++++ b/src/utils/utils.c
+@@ -6,7 +6,7 @@
+ /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
+ /*                                                +#+#+#+#+#+   +#+           */
+ /*   Created: 2026/08/12 10:38:31 by jbarreir          #+#    #+#             */
+-/*   Updated: 2026/09/15 08:10:36 by jbarreir         ###   ########.fr       */
++/*   Updated: 2026/09/28 19:54:29 by jbarreir         ###   ########.fr       */
+ /*                                                                            */
+ /* ************************************************************************** */
+ 
+@@ -17,11 +17,11 @@ int	print_err(int error_code, char *err, t_simulation *sim, bool free_mem)
+ 	fprintf(stderr, "ERROR: ");
+ 	fprintf(stderr, "%s", err);
+ 	if (free_mem)
+-		free_hub_memory(sim);
++		free_all_memory(sim, error_code, sim->n_coders);
+ 	return (error_code);
+ }
+ 
+-long long	timer(struct timeval *start)
++long long	timer(t_simulation *sim)
+ {
+ 	struct timeval		end;
+ 	long long			sec;
+@@ -29,42 +29,21 @@ long long	timer(struct timeval *start)
+ 	long long			msec;
+ 
+ 	gettimeofday(&end, NULL);
+-	sec = end.tv_sec - start->tv_sec;
+-	usec = end.tv_usec - start->tv_usec;
++	sec = end.tv_sec - sim->start_time.tv_sec;
++	usec = end.tv_usec - sim->start_time.tv_usec;
+ 	msec = (sec * 1000) + (usec / 1000);
+ 	return (msec);
+ }
+ 
+-void	print_log(t_coder *coder, long long timestamp, bool lock)
+-{
+-	pthread_mutex_lock(&coder->sim->log);
+-	if (lock)
+-		pthread_mutex_lock(&coder->lock);
+-	if (coder->status == TAKING_DONGLE)
+-		printf("%lld %d has taken a dongle\n", timestamp, coder->id);
+-	else if (coder->status == COMPILING)
+-		printf("%lld %d is compiling\n", timestamp, coder->id);
+-	else if (coder->status == DEBUGGING)
+-		printf("%lld %d is debugging\n", timestamp, coder->id);
+-	else if (coder->status == REFACTORING)
+-		printf("%lld %d is refactoring\n", timestamp, coder->id);
+-	else if (coder->status == BURNOUT)
+-		printf("%lld %d burned out\n", timestamp, coder->id);
+-	if (lock)
+-		pthread_mutex_unlock(&coder->lock);
+-	fflush(stdout);
+-	pthread_mutex_unlock(&coder->sim->log);
+-}
+-
+ void	vigilant_sleep(t_coder *coder, long long sleeping_time)
+ {
+ 	long long			start;
+ 
+-	start = timer(&coder->sim->start);
+-	while ((timer(&coder->sim->start) - start) < sleeping_time)
++	start = timer(coder->sim);
++	while ((timer(coder->sim) - start) < sleeping_time)
+ 	{
+ 		pthread_mutex_lock(&coder->sim->lock);
+-		if (coder->sim->status == SHUTDOWN_SIGNAL)
++		if (coder->sim->status == SHUTDOWN)
+ 		{
+ 			pthread_mutex_unlock(&coder->sim->lock);
+ 			return ;
+@@ -74,17 +53,34 @@ void	vigilant_sleep(t_coder *coder, long long sleeping_time)
+ 	}
+ }
+ 
+-bool	safe_coder_status(t_coder *coder, t_status status, bool lock)
++bool	sim_lock_and_access(t_simulation *sim, t_status status, bool update)
+ {
+-	bool				result;
++	bool result;
+ 
+-	if (lock)
+-		pthread_mutex_lock(&coder->lock);
+-	if (coder->status == status)
++	pthread_mutex_lock(&sim->lock);
++	if (sim->status == status)
+ 		result = true;
+ 	else
+ 		result = false;
+-	if (lock)
+-		pthread_mutex_unlock(&coder->lock);
++	if (update && sim->status != SHUTDOWN)
++		sim->status = status;
++	pthread_mutex_unlock(&sim->lock);
+ 	return (result);
+ }
++
++void	update_cooldown(t_dongle *usb, t_simulation *sim)
++{
++	long long			now;
++
++	pthread_mutex_lock(&usb->lock);
++	if (usb->status == COOLING_DOWN)
++	{
++		now = timer(sim);
++		if (now >= usb->last_compile_time + usb->sim->dongle_cooldown)
++		{
++			usb->status = AVAILABLE;
++			pthread_cond_broadcast(&usb->cond);
++		}
++	}
++	pthread_mutex_unlock(&usb->lock);
++}
