@@ -26,7 +26,7 @@
 # include <stdbool.h>
 
 /* *** LIMITS *** */
-# define MAX_CODERS 1024
+# define MAX_CODERS 100000
 # define SLEEP_INTERVAL 1000
 # define MONITOR_SLEEP 1000
 
