@@ -36,10 +36,13 @@ void	pthread_destroy_monitor(t_monitor *monitor)
 
 void	pthread_destroy_printer(t_printer *printer)
 {
-	pthread_mutex_lock(&printer->lock);
-	printer->stop = true;
-	pthread_cond_broadcast(&printer->cond);
-	pthread_mutex_unlock(&printer->lock);
+	if (printer->has_lock)
+	{
+		pthread_mutex_lock(&printer->lock);
+		printer->stop = true;
+		pthread_cond_broadcast(&printer->cond);
+		pthread_mutex_unlock(&printer->lock);
+	}
 	if (printer->has_thread)
 		pthread_join(printer->thread, NULL);
 	if (printer->has_lock)
