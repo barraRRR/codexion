@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/13 09:29:21 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/29 12:55:25 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/29 18:33:10 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,7 +26,7 @@
 # include <stdbool.h>
 
 /* *** LIMITS *** */
-# define MAX_CODERS 100000
+# define MAX_CODERS 5000
 # define SLEEP_INTERVAL 1000
 # define MONITOR_SLEEP 1000
 
