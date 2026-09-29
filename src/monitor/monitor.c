@@ -52,7 +52,7 @@ static t_status check_hub(t_simulation *sim)
 		status = check_coder(sim->hub[i]);
 		if (status == BURNOUT || status == MALLOC_ERR)
 		{
-			stop_printer(sim->printer);
+			stop_printer(&sim->printer);
 			return (SHUTDOWN);
 		}
 		if (status == COMPILING)
@@ -60,7 +60,7 @@ static t_status check_hub(t_simulation *sim)
 	}
 	if (active == 0)
 	{
-		stop_printer(sim->printer);
+		stop_printer(&sim->printer);
 		return (SHUTDOWN);
 	}
 	return (COMPILING);
