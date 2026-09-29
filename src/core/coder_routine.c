@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/22 10:29:43 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/28 19:58:50 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/29 13:00:33 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -137,12 +137,12 @@ void	*quantum_compiler(void *arg)
 			return (exit_routine(coder));
 		if (status == CODER_INIT || status == REFACTORING_COMPLETED)
 			enqueue_coder(coder);
-		else if (status == WAITING_DONGLE)
-			take_dongles(coder);
-		else if (status == TAKING_DONGLE)
-			compile_init(coder);
-		else if (status == COMPILING_COMPLETED)
-			debug_and_refactor(coder);
+		else if (status == WAITING_DONGLE && take_dongles(coder) == MALLOC_ERR)
+			return (exit_routine(coder));
+		else if (status == TAKING_DONGLE && compile_init(coder) == MALLOC_ERR)
+			return (exit_routine(coder));
+		else if (status == COMPILING_COMPLETED && debug_and_refactor(coder) == MALLOC_ERR)
+			return (exit_routine(coder));
 	}
 	return (NULL);
 }

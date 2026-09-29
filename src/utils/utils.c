@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/12 10:38:31 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/28 19:54:29 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/29 13:00:50 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@ int	print_err(int error_code, char *err, t_simulation *sim, bool free_mem)
 	fprintf(stderr, "ERROR: ");
 	fprintf(stderr, "%s", err);
 	if (free_mem)
-		free_all_memory(sim, error_code, sim->n_coders);
+		free_all_memory(sim, error_code);
 	return (error_code);
 }
 

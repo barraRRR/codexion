@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/09/28 16:59:58 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/28 17:38:13 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/29 12:55:43 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,8 +48,6 @@ void	pthread_destroy_sim(t_simulation *sim)
 {
 	if (sim->has_lock)
 		pthread_mutex_destroy(&sim->lock);
-	if (sim->has_log)
-		pthread_mutex_destroy(&sim->log);
 	if (sim->has_start_lock)
 		pthread_mutex_destroy(&sim->start_lock);
 	if (sim->has_start_cond)

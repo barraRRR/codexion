@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/19 10:55:55 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/28 18:25:03 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/29 12:57:28 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,18 +19,17 @@ void	init_sim_data(t_simulation *sim)
 	sim->printer.sim = sim;
 	sim->printer.has_lock = false;
 	sim->printer.has_cond = false;
-	sim->printer.print = false;
-	sim->printer.head_log = NULL;
-	sim->printer.last_printed = NULL;
+	sim->printer.stop = false;
+	sim->printer.head = NULL;
+	sim->printer.tail = NULL;
 	sim->has_lock = false;
-	sim->has_log = false;
 	sim->has_start_lock = false;
 	sim->has_start_cond = false;
 	sim->is_started = false;
 	sim->hub = NULL;
 	sim->quantum = NULL;
-	sim->n_coders = 0;
-	sim->n_dongles = 0;
+	sim->n_coders_init = 0;
+	sim->n_dongles_init = 0;
 }
 
 static t_coder	*init_coder(t_simulation *sim, int id)
@@ -54,7 +53,7 @@ static t_coder	*init_coder(t_simulation *sim, int id)
 		return (NULL);
 	}
 	coder->has_lock = true;
-	sim->n_coders++;
+	sim->n_coders_init++;
 	return (coder);
 }
 
@@ -82,7 +81,7 @@ static t_dongle	*init_usb(t_simulation *sim, int id)
 		free(usb);
 		return (NULL);
 	}
-	sim->n_dongles++;
+	sim->n_dongles_init++;
 	return (usb);
 }
 
@@ -119,16 +118,16 @@ t_status	init_coworking(t_simulation *sim)
 		return (MALLOC_ERR);
 	sim->hub = (t_coder **)malloc(sizeof(t_coder *) * (n + 1));
 	if (!sim->hub)
-		return (free_all_memory(sim, MALLOC_ERR, 0));
+		return (free_all_memory(sim, MALLOC_ERR));
 	i = -1;
 	while (++i < n)
 	{
 		sim->hub[i] = init_coder(sim, i);
 		if (!sim->hub[i])
-			return (free_all_memory(sim, MALLOC_ERR, i + 1));
+			return (MALLOC_ERR);
 		sim->quantum[i] = init_usb(sim, i);
 		if (!sim->quantum[i])
-			return (free_all_memory(sim, MALLOC_ERR, i + 1));
+			return (MALLOC_ERR);
 		sim->hub[i]->usb_right = sim->quantum[i];
 	}
 	sim->hub[i] = NULL;

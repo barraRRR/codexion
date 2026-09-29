@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/20 14:52:04 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/28 19:54:20 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/29 12:57:07 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,17 +16,16 @@ static t_status check_coder(t_coder *coder)
 {
 	t_status			status;
 
-	status = SHUTDOWN;
+	status = COMPILING;
 	pthread_mutex_lock(&coder->lock);
-	if (coder->status != ALL_COMPILES_COMPLETED && (coder->status == BURNOUT
-		|| am_i_burnt(coder)))
+	if (coder->status == ALL_COMPILES_COMPLETED)
+		status = ALL_COMPILES_COMPLETED;
+	else if (coder->status == BURNOUT || am_i_burnt(coder))
 	{
+		status = BURNOUT;
 		if (!append_log(coder, timer(coder->sim)))
-			return (exit_code_unlock(coder, MALLOC_ERR, false));
-		status = SHUTDOWN;
+			status = MALLOC_ERR;
 	}
-	else if (coder->status != ALL_COMPILES_COMPLETED)
-		status = COMPILING;
 	pthread_mutex_unlock(&coder->lock);
 	return (status);
 }
@@ -34,14 +33,25 @@ static t_status check_coder(t_coder *coder)
 static t_status check_hub(t_simulation *sim)
 {
 	int					i;
+	int					active;
+	t_status			status;
 
 	i = -1;
+	active = 0;
 	while (++i < sim->n_coders)
 	{
 		update_cooldown(sim->quantum[i], sim);
-		if (check_coder(sim->hub[i]) == SHUTDOWN)
+		status = check_coder(sim->hub[i]);
+		if (status == BURNOUT || status == MALLOC_ERR)
+		{
+			sim->printer.stop = true;
 			return (SHUTDOWN);
+		}
+		if (status == COMPILING)
+			active++;
 	}
+	if (active == 0)
+		return (SHUTDOWN);
 	return (COMPILING);
 }
 

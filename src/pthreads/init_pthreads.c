@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/19 13:09:10 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/28 18:34:14 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/29 12:56:28 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,9 +14,6 @@
 
 static t_status	init_sim_pthread(t_simulation *sim)
 {
-	if (pthread_mutex_init(&sim->log, NULL))
-		return (INIT_LOG_ERR);
-	sim->has_log = true;
 	if (pthread_mutex_init(&sim->lock, NULL))
 		return (INIT_SIM_LOCK_ERR);
 	sim->has_lock = true;
@@ -26,10 +23,10 @@ static t_status	init_sim_pthread(t_simulation *sim)
 	if (pthread_cond_init(&sim->start_cond, NULL))
 		return (INIT_START_COND_ERR);
 	sim->has_start_cond = true;
-	if (!pthread_mutex_init(&sim->printer.lock, NULL))
+	if (pthread_mutex_init(&sim->printer.lock, NULL))
 		return (INIT_PRINTER_ERR);
 	sim->printer.has_lock = true;
-	if (!pthread_cond_init(&sim->printer.cond, NULL))
+	if (pthread_cond_init(&sim->printer.cond, NULL))
 		return (INIT_PRINTER_ERR);
 	sim->printer.has_cond = true;
 	return (INIT_SIMULATION);
@@ -53,8 +50,9 @@ t_status	init_threads(t_simulation *sim)
 	if (pthread_create(&sim->monitor.thread, NULL, monitor_routine,
 			&sim->monitor))
 		return (abort_start_sequence(sim, INIT_MONITOR_ERR));
+	sim->monitor.has_thread = true;
 	if (pthread_create(&sim->printer.thread, NULL, printer_routine,
-			&sim->monitor))
+			&sim->printer))
 		return (abort_start_sequence(sim, INIT_PRINTER_ERR));
 	sim->printer.has_thread = true;
 	start_sequence(sim);

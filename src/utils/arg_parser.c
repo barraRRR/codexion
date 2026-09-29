@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/18 13:22:11 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/28 18:09:38 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/29 12:44:30 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,7 @@
 static t_status	check_digits(char *str)
 {
 	if (!str || *str == '\0')
-		return (0);
+		return (ARG_NUM_ERR);
 	while (*str)
 	{
 		if (*str < '0' || *str > '9')

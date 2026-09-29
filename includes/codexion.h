@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/13 09:29:21 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/28 20:00:17 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/29 12:55:25 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -152,17 +152,15 @@ struct s_printer
 	bool					has_lock;
 	pthread_cond_t			cond;
 	bool					has_cond;
-	bool					print;
-	t_log					*head_log;
-	t_log					*last_printed;
+	bool					stop;
+	t_log					*head;
+	t_log					*tail;
 };
 
 struct s_simulation
 {
 	pthread_mutex_t			lock;
 	bool					has_lock;
-	pthread_mutex_t			log;
-	bool					has_log;
 	pthread_mutex_t			start_lock;
 	bool					has_start_lock;
 	pthread_cond_t			start_cond;
@@ -182,14 +180,15 @@ struct s_simulation
 	long long				dongle_cooldown;
 	int						compiles_required;
 	t_scheduler				scheduler;
-	int						n_dongles;
+	int						n_dongles_init;
+	int						n_coders_init;
 };
 
 /* *** PROTOTYPES *** */
 long long		timer(t_simulation *sim);
 t_status		parse_rules(t_simulation *sim, int argc, char **argv);
 t_status		init_coworking(t_simulation *sim);
-t_status		free_all_memory(t_simulation *sim, t_status status, int i);
+t_status		free_all_memory(t_simulation *sim, t_status status);
 t_status		init_threads(t_simulation *sim);
 int				print_err(int error_code, char *err, t_simulation *sim,
 					bool free_mem);
@@ -228,7 +227,7 @@ bool			up_and_running(t_coder *coder);
 
 void			*printer_routine(void *arg);
 bool			append_log(t_coder *coder, long long time);
-void			free_logs(t_printer *printer, bool free_all);
+void			free_logs(t_printer *printer);
 
 void			pthread_destroy_coder(t_coder *coder);
 void			pthread_destroy_dongle(t_dongle *dongle);
