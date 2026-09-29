@@ -12,6 +12,14 @@
 
 #include "codexion.h"
 
+static void	stop_printer(t_printer *printer)
+{
+	pthread_mutex_lock(&printer->lock);
+	printer->stop = true;
+	pthread_cond_broadcast(&printer->cond);
+	pthread_mutex_unlock(&printer->lock);
+}
+
 static t_status check_coder(t_coder *coder)
 {
 	t_status			status;
@@ -44,14 +52,17 @@ static t_status check_hub(t_simulation *sim)
 		status = check_coder(sim->hub[i]);
 		if (status == BURNOUT || status == MALLOC_ERR)
 		{
-			sim->printer.stop = true;
+			stop_printer(sim->printer);
 			return (SHUTDOWN);
 		}
 		if (status == COMPILING)
 			active++;
 	}
 	if (active == 0)
+	{
+		stop_printer(sim->printer);
 		return (SHUTDOWN);
+	}
 	return (COMPILING);
 }
 
@@ -67,6 +78,8 @@ static void	wake_dongles(t_monitor *monitor)
 		pthread_mutex_unlock(&monitor->sim->quantum[i]->lock);
 	}
 }
+
+
 
 void	*monitor_routine(void *arg)
 {

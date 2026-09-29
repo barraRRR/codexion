@@ -138,11 +138,11 @@ void	*quantum_compiler(void *arg)
 		if (status == CODER_INIT || status == REFACTORING_COMPLETED)
 			enqueue_coder(coder);
 		else if (status == WAITING_DONGLE && take_dongles(coder) == MALLOC_ERR)
-			return (exit_routine(coder));
+			return (NULL);
 		else if (status == TAKING_DONGLE && compile_init(coder) == MALLOC_ERR)
-			return (exit_routine(coder));
+			return (NULL);
 		else if (status == COMPILING_COMPLETED && debug_and_refactor(coder) == MALLOC_ERR)
-			return (exit_routine(coder));
+			return (NULL);
 	}
 	return (NULL);
 }

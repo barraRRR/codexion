@@ -118,7 +118,7 @@ t_status	init_coworking(t_simulation *sim)
 		return (MALLOC_ERR);
 	sim->hub = (t_coder **)malloc(sizeof(t_coder *) * (n + 1));
 	if (!sim->hub)
-		return (free_all_memory(sim, MALLOC_ERR));
+		return (MALLOC_ERR);
 	i = -1;
 	while (++i < n)
 	{
