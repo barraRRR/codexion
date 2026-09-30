@@ -29,7 +29,6 @@ The project focuses on coordinating multiple threads safely while preserving liv
 - [Blocking cases handled](#blocking-cases-handled)
 - [Thread synchronization mechanisms](#thread-synchronization-mechanisms)
 - [Project structure](#project-structure)
-- [Testing](#testing)
 - [Resources](#resources)
 
 ---

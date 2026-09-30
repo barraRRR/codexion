@@ -6,19 +6,11 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/22 10:29:43 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/29 13:00:33 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/30 10:13:17 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
-
-t_status	exit_code_unlock(t_coder *coder, t_status status, bool dongles)
-{
-	if (dongles)
-		unlock_dongles(coder);
-	pthread_mutex_unlock(&coder->lock);
-	return (status);
-}
 
 static void	lock_wait(t_coder *coder, t_dongle *left, t_dongle *right,
 						t_status status)
@@ -93,7 +85,7 @@ static t_status	compile_init(t_coder *coder)
 	return (coder->status);
 }
 
-static t_status	debug_and_refactor(t_coder *coder)
+static t_status	debug_ref(t_coder *coder)
 {
 	if (am_i_burnt(coder))
 		return (exit_code_unlock(coder, BURNOUT, false));
@@ -121,7 +113,7 @@ static t_status	debug_and_refactor(t_coder *coder)
 void	*quantum_compiler(void *arg)
 {
 	t_coder				*coder;
-	t_status			status;
+	t_status			s;
 
 	coder = (t_coder *)arg;
 	wait_for_start_sequence(coder->sim);
@@ -132,16 +124,16 @@ void	*quantum_compiler(void *arg)
 		if (!up_and_running(coder))
 			break ;
 		pthread_mutex_lock(&coder->lock);
-		status = coder->status;
-		if (status == BURNOUT || status == ALL_COMPILES_COMPLETED)
+		s = coder->status;
+		if (s == BURNOUT || s == ALL_COMPILES_COMPLETED)
 			return (exit_routine(coder));
-		if (status == CODER_INIT || status == REFACTORING_COMPLETED)
+		if (s == CODER_INIT || s == REFACTORING_COMPLETED)
 			enqueue_coder(coder);
-		else if (status == WAITING_DONGLE && take_dongles(coder) == MALLOC_ERR)
+		else if (s == WAITING_DONGLE && take_dongles(coder) == MALLOC_ERR)
 			return (NULL);
-		else if (status == TAKING_DONGLE && compile_init(coder) == MALLOC_ERR)
+		else if (s == TAKING_DONGLE && compile_init(coder) == MALLOC_ERR)
 			return (NULL);
-		else if (status == COMPILING_COMPLETED && debug_and_refactor(coder) == MALLOC_ERR)
+		else if (s == COMPILING_COMPLETED && debug_ref(coder) == MALLOC_ERR)
 			return (NULL);
 	}
 	return (NULL);

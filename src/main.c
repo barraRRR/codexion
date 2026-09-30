@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/13 09:29:04 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/28 21:04:59 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/30 09:53:14 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,6 +27,5 @@ int	main(int argc, char **argv)
 		return (print_err(MALLOC_ERR, MALLOC_ERR_MSG, &sim, true));
 	if (init_threads(&sim) != INIT_SIMULATION)
 		return (print_err(INIT_THREADS_ERR, THREAD_ERR_MSG, &sim, true));
-	return (free_all_memory(&sim, SUCCESS
-	));
+	return (free_all_memory(&sim, SUCCESS));
 }

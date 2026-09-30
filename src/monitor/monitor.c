@@ -6,13 +6,13 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/20 14:52:04 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/29 12:57:07 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/30 09:55:07 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
 
-static t_status check_coder(t_coder *coder)
+static t_status	check_coder(t_coder *coder)
 {
 	t_status			status;
 
@@ -30,7 +30,7 @@ static t_status check_coder(t_coder *coder)
 	return (status);
 }
 
-static t_status check_hub(t_simulation *sim)
+static t_status	check_hub(t_simulation *sim)
 {
 	int					i;
 	int					active;
@@ -64,8 +64,6 @@ static void	wake_dongles(t_monitor *monitor)
 		pthread_mutex_unlock(&monitor->sim->quantum[i]->lock);
 	}
 }
-
-
 
 void	*monitor_routine(void *arg)
 {

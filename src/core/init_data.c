@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/19 10:55:55 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/29 12:57:28 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/30 10:29:32 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,7 @@ void	init_sim_data(t_simulation *sim)
 	sim->printer.has_lock = false;
 	sim->printer.has_cond = false;
 	sim->printer.stop = false;
+	sim->printer.print = true;
 	sim->printer.head = NULL;
 	sim->printer.tail = NULL;
 	sim->has_lock = false;

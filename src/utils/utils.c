@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/12 10:38:31 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/29 13:00:50 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/30 09:56:37 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,7 +55,7 @@ void	vigilant_sleep(t_coder *coder, long long sleeping_time)
 
 bool	sim_lock_and_access(t_simulation *sim, t_status status, bool update)
 {
-	bool result;
+	bool				result;
 
 	pthread_mutex_lock(&sim->lock);
 	if (sim->status == status)

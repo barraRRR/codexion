@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/09/15 19:15:29 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/28 19:03:48 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/30 10:01:56 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,4 +30,12 @@ void	*exit_routine(t_coder *coder)
 {
 	pthread_mutex_unlock(&coder->lock);
 	return (NULL);
+}
+
+t_status	exit_code_unlock(t_coder *coder, t_status status, bool dongles)
+{
+	if (dongles)
+		unlock_dongles(coder);
+	pthread_mutex_unlock(&coder->lock);
+	return (status);
 }

@@ -6,13 +6,13 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/22 10:26:13 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/28 18:51:34 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/30 10:14:05 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
 
-bool	usb_access(t_dongle *usb, t_coder *coder)
+static bool	usb_access(t_dongle *usb, t_coder *coder)
 {
 	if (usb->status == PLUGGED)
 		return (false);

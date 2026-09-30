@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/13 09:29:21 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/29 18:33:10 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/30 10:29:16 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -153,6 +153,7 @@ struct s_printer
 	pthread_cond_t			cond;
 	bool					has_cond;
 	bool					stop;
+	bool					print;
 	t_log					*head;
 	t_log					*tail;
 };
@@ -205,7 +206,6 @@ void			enqueue_coder(t_coder *coder);
 void			*monitor_routine(void *arg);
 
 void			update_cooldown(t_dongle *usb, t_simulation *sim);
-bool			usb_access(t_dongle *usb, t_coder *coder);
 t_status		both_usb_access(t_coder *coder);
 void			lock_dongles_in_order(t_coder *coder);
 void			unlock_dongles(t_coder *coder);
@@ -221,6 +221,7 @@ bool			sim_lock_and_access(t_simulation *sim, t_status status,
 
 void			*solo_coder(t_coder *coder);
 void			*exit_routine(t_coder *coder);
+t_status		exit_code_unlock(t_coder *coder, t_status status, bool dongles);
 bool			am_i_burnt(t_coder *coder);
 void			have_i_finished(t_coder *coder);
 bool			up_and_running(t_coder *coder);

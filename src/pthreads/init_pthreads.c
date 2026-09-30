@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/19 13:09:10 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/29 12:56:28 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/30 09:56:04 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,7 +43,7 @@ t_status	init_threads(t_simulation *sim)
 	while (++i < sim->n_coders)
 	{
 		if (pthread_create(&sim->hub[i]->thread, NULL, quantum_compiler,
-						   sim->hub[i]))
+				sim->hub[i]))
 			return (abort_start_sequence(sim, INIT_THREADS_ERR));
 		sim->hub[i]->has_thread = true;
 	}

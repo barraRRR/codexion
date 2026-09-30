@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/25 17:16:45 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/29 12:41:44 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/30 09:51:48 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,8 +33,10 @@ t_status	free_all_memory(t_simulation *sim, t_status status)
 		free(sim->quantum[i]);
 	if (sim->hub)
 		free(sim->hub);
+	sim->hub = NULL;
 	if (sim->quantum)
 		free(sim->quantum);
+	sim->quantum = NULL;
 	free_logs(&sim->printer);
 	return (status);
 }
