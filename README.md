@@ -158,7 +158,7 @@ When a coder releases dongles or the monitor finishes their cooldown, `pthread_c
 
 ### Monitor-to-coder communication
 
-The monitor updates the shared simulation status to `SHUTDOWN_SIGNAL` under the simulation mutex. Coders check this state during their routine and while sleeping. When shutdown occurs, the monitor also broadcasts all dongle condition variables, ensuring that no thread remains blocked forever.
+The monitor and submonitor pool updates the shared simulation status to `SHUTDOWN_SIGNAL` under the simulation mutex. Coders check this state during their routine and while sleeping. When shutdown occurs, the monitor also broadcasts all dongle condition variables, ensuring that no thread remains blocked forever.
 
 ### Thread-safe asynchronous logging
 

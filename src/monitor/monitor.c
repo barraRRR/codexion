@@ -43,7 +43,7 @@ static t_status	check_hub(t_simulation *sim, t_submonitor *sub)
 		update_cooldown(sim->quantum[i], sim);
 		status = check_coder(sim->hub[i]);
 		if (status == BURNOUT || status == MALLOC_ERR)
-			return (SHUTDOWN);
+			return (status);
 		if (status != COMPLETION)
 			active++;
 	}
@@ -65,8 +65,8 @@ static t_status	check_pool(t_monitor *mon)
 		pthread_mutex_lock(&mon->pool[i]->lock);
 		status = mon->pool[i]->status;
 		pthread_mutex_unlock(&mon->pool[i]->lock);
-		if (status == BURNOUT)
-			return (BURNOUT);
+		if (status == BURNOUT || status == MALLOC_ERR)
+			return (status);
 		if (status == COMPLETION)
 			completion++;
 	}
@@ -87,7 +87,8 @@ void	*submonitor_routine(void *arg)
 			break ;
 		pthread_mutex_lock(&sub->lock);
 		sub->status = check_hub(sub->sim, sub);
-		if (sub->status == SHUTDOWN || sub->status == COMPLETION || sub->status == BURNOUT)
+		if (sub->status == SHUTDOWN || sub->status == COMPLETION
+			|| sub->status == BURNOUT || sub->status == MALLOC_ERR)
 		{
 			pthread_mutex_unlock(&sub->lock);
 			break ;
@@ -110,7 +111,7 @@ void	*monitor_routine(void *arg)
 		if (sim_lock_and_access(mon->sim, SHUTDOWN, false))
 			break ;
 		s = check_pool(mon);
-		if (s == BURNOUT || s == COMPLETION)
+		if (s == BURNOUT || s == COMPLETION || s == MALLOC_ERR)
 		{
 			sim_lock_and_access(mon->sim, SHUTDOWN, true);
 			break;
