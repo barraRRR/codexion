@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/22 10:29:43 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/30 10:13:17 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/30 11:01:35 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,7 +53,7 @@ static t_status	take_dongles(t_coder *coder)
 				return (exit_code_unlock(coder, SHUTDOWN, true));
 		}
 		coder->status = TAKING_DONGLE;
-		if (!append_log(coder, timer(coder->sim)))
+		if (!append_log(coder))
 			return (exit_code_unlock(coder, MALLOC_ERR, true));
 		dequeue_dongles(coder);
 	}
@@ -68,7 +68,7 @@ static t_status	compile_init(t_coder *coder)
 		return (exit_code_unlock(coder, BURNOUT, false));
 	coder->status = COMPILING;
 	coder->last_compile_start = timer(coder->sim);
-	if (!append_log(coder, coder->last_compile_start))
+	if (!append_log(coder))
 		return (exit_code_unlock(coder, MALLOC_ERR, false));
 	pthread_mutex_unlock(&coder->lock);
 	vigilant_sleep(coder, coder->sim->time_to_compile);
@@ -90,7 +90,7 @@ static t_status	debug_ref(t_coder *coder)
 	if (am_i_burnt(coder))
 		return (exit_code_unlock(coder, BURNOUT, false));
 	coder->status = DEBUGGING;
-	if (!append_log(coder, timer(coder->sim)))
+	if (!append_log(coder))
 		return (exit_code_unlock(coder, MALLOC_ERR, false));
 	pthread_mutex_unlock(&coder->lock);
 	vigilant_sleep(coder, coder->sim->time_to_debug);
@@ -100,7 +100,7 @@ static t_status	debug_ref(t_coder *coder)
 	if (am_i_burnt(coder))
 		return (exit_code_unlock(coder, BURNOUT, false));
 	coder->status = REFACTORING;
-	if (!append_log(coder, timer(coder->sim)))
+	if (!append_log(coder))
 		return (exit_code_unlock(coder, MALLOC_ERR, false));
 	pthread_mutex_unlock(&coder->lock);
 	vigilant_sleep(coder, coder->sim->time_to_refactor);

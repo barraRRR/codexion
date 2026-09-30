@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/20 14:52:04 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/30 09:55:07 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/30 11:01:54 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,7 @@ static t_status	check_coder(t_coder *coder)
 	else if (coder->status == BURNOUT || am_i_burnt(coder))
 	{
 		status = BURNOUT;
-		if (!append_log(coder, timer(coder->sim)))
+		if (!append_log(coder))
 			status = MALLOC_ERR;
 	}
 	pthread_mutex_unlock(&coder->lock);

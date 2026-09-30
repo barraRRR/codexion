@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/09/28 12:02:13 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/30 10:30:28 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/30 11:00:59 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,7 +37,10 @@ static void	print_batch(t_printer *p, t_log *batch, t_log *next)
 	{
 		next = batch->next;
 		if (p->print)
+		{
+			batch->time = timer(p->sim);
 			print_log(batch);
+		}
 		if (batch->status == BURNOUT)
 			p->print = false;
 		free(batch);

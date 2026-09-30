@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/13 09:29:21 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/30 10:29:16 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/30 10:58:34 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -227,7 +227,7 @@ void			have_i_finished(t_coder *coder);
 bool			up_and_running(t_coder *coder);
 
 void			*printer_routine(void *arg);
-bool			append_log(t_coder *coder, long long time);
+bool			append_log(t_coder *coder);
 void			free_logs(t_printer *printer);
 
 void			pthread_destroy_coder(t_coder *coder);

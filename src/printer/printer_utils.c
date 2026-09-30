@@ -6,32 +6,32 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/09/30 10:05:08 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/30 10:23:49 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/30 11:02:27 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
 
-t_log	*create_log(long long time, t_status status, int coder_id)
+t_log	*create_log(t_status status, int coder_id)
 {
 	t_log				*new_log;
 
 	new_log = (t_log *)malloc(sizeof(t_log));
 	if (!new_log)
 		return (NULL);
-	new_log->time = time;
+	new_log->time = 0;
 	new_log->next = NULL;
 	new_log->status = status;
 	new_log->coder_id = coder_id;
 	return (new_log);
 }
 
-bool	append_log(t_coder *coder, long long time)
+bool	append_log(t_coder *coder)
 {
 	t_log				*log;
 	t_printer			*p;
 
-	log = create_log(time, coder->status, coder->id);
+	log = create_log(coder->status, coder->id);
 	if (!log)
 		return (false);
 	p = &coder->sim->printer;
