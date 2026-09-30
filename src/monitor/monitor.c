@@ -16,8 +16,8 @@ static t_status	check_coder(t_coder *coder)
 {
 	t_status			status;
 
-	status = COMPILING;
 	pthread_mutex_lock(&coder->lock);
+	status = coder->status;
 	if (coder->status == COMPLETION)
 		status = COMPLETION;
 	else if (coder->status == BURNOUT || am_i_burnt(coder))
@@ -85,7 +85,7 @@ void	*submonitor_routine(void *arg)
 	{
 		pthread_mutex_lock(&sub->lock);
 		sub->status = check_hub(sub->sim, sub);
-		if (sub->status == SHUTDOWN || sub->status == COMPLETION)
+		if (sub->status == SHUTDOWN || sub->status == COMPLETION || sub->status == BURNOUT)
 		{
 			pthread_mutex_unlock(&sub->lock);
 			break ;

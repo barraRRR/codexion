@@ -152,6 +152,7 @@ struct s_submonitor
 	pthread_mutex_t			lock;
 	bool					has_lock;
 	t_status				status;
+	int						n_coders;
 };
 
 struct s_log
