@@ -29,7 +29,6 @@ The project focuses on coordinating multiple threads safely while preserving liv
 - [Blocking cases handled](#blocking-cases-handled)
 - [Thread synchronization mechanisms](#thread-synchronization-mechanisms)
 - [Project structure](#project-structure)
-- [Testing](#testing)
 - [Resources](#resources)
 
 ---
@@ -125,14 +124,15 @@ Cooldown updates are independent of whether the coder associated with a dongle h
 
 A dedicated monitor thread checks each coder's last compilation start time. If the configured burnout limit is exceeded, the monitor marks the coder as burned out, sends the shutdown signal, wakes any threads blocked on dongle condition variables, and stops the simulation.
 
-### Serialized logging
+### Serialized Logging
 
-All output is protected by a logging mutex. This ensures that a log line is printed atomically and that concurrent threads cannot interleave their messages.
+All output is protected by a logging mechanism. This ensures that log lines are printed atomically and concurrent threads cannot interleave their messages.
+
+Since `printf()` is a relatively slow function, we offload this responsibility to a dedicated printer thread. Other threads simply enqueue their logs into a linked-list queue, while the printer outputs them at its own pace.
 
 ## Limits
 
-`MAX_CODERS` is capped at `1024`. Beyond this point, the monitor thread's per-tick sweep over every coder and dongle can no longer be guaranteed to complete within `MONITOR_SLEEP`, which would make burnout detection and timestamp accuracy unreliable. `parse_rules`
-rejects any `number_of_coders` outside `[1, MAX_CODERS]` with `MAX_COD_ERR` before the simulation starts.
+`MAX_CODERS` is capped at `5,000`. Approaching `7,000` threads can cause test machines to fail due to the heavy overhead of concurrent POSIX threads. `parse_rules` rejects any `number_of_coders` outside the `[1, MAX_CODERS]` range with `MAX_COD_ERR` before the simulation starts.
 
 ---
 
@@ -147,7 +147,6 @@ Mutexes protect all shared mutable state:
 | Dongle state, queue, cooldown timestamp | One mutex per dongle |
 | Coder state and compilation counters | One mutex per coder |
 | Global simulation status | Simulation mutex |
-| Terminal output | Log mutex |
 
 For example, a coder checks whether both dongles are available only after locking both dongle mutexes. This makes the availability check and the transition to `PLUGGED` atomic from the perspective of other coders.
 
@@ -161,6 +160,10 @@ When a coder releases dongles or the monitor finishes their cooldown, `pthread_c
 
 The monitor updates the shared simulation status to `SHUTDOWN_SIGNAL` under the simulation mutex. Coders check this state during their routine and while sleeping. When shutdown occurs, the monitor also broadcasts all dongle condition variables, ensuring that no thread remains blocked forever.
 
+### Thread-safe asynchronous logging
+
+Worker threads append their status logs to a linked-list queue protected by the printer mutex. Upon enqueuing a message, they broadcast a signal via the printer condition variable to wake up the dedicated printer thread asynchronously. This decouples `printf()` operations from the simulation logic, preventing I/O blocking during concurrent execution.
+
 ---
 
 ## Project structure
@@ -170,47 +173,14 @@ The monitor updates the shared simulation status to `SHUTDOWN_SIGNAL` under the 
 ├── includes/
 │   └── codexion.h
 ├── src/
-│   ├── core/        # Coder routine, dongles, safe lock helpers
-│   ├── init/        # Allocation, initialization, cleanup, thread creation
+│   ├── core/        # Coder routine, init data
 │   ├── monitor/     # Burnout and cooldown monitor
+│   ├── printer/     # Logging printer
+│   ├── pthreads/    # Thread creation and cleanup
 │   ├── sheduler/    # FIFO and EDF queue policies
-│   ├── utils/       # Argument parsing, timing, logging, sleeps
+│   ├── utils/       # Argument parsing, timing, sleeps
 │   └── main.c
-├── Makefile
-└── tester.sh
-```
-
----
-
-## Testing
-
-The repository includes a small test runner:
-
-```bash
-./tester.sh 1
-./tester.sh 2
-./tester.sh big
-./tester.sh starvation
-```
-
-Example stress test:
-
-```bash
-./codexion 199 60000 61 61 61 10 61 edf
-```
-
-For memory and thread analysis on Linux:
-
-```bash
-./tester.sh 1 mem
-./tester.sh 1 helgrind
-```
-
-Recommended commands:
-
-```bash
-valgrind --leak-check=full ./codexion 4 800 200 200 200 5 10 fifo
-valgrind --tool=helgrind ./codexion 4 800 200 200 200 5 10 fifo
+└── Makefile
 ```
 
 ---

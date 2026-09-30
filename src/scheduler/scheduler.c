@@ -32,15 +32,7 @@ void	edf_scheduler(t_coder **queue, t_coder *coder)
 		queue[0] = coder;
 	}
 	else if (coder->last_compile_start == queue[0]->last_compile_start)
-	{
-		if (coder->id <= queue[0]->id)
-		{
-			queue[1] = queue[0];
-			queue[0] = coder;
-		}
-		else
-			queue[1] = coder;
-	}
+		queue[1] = coder;
 	else if (!queue[1])
 		queue[1] = coder;
 }

@@ -6,13 +6,13 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/22 10:26:13 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/22 18:08:59 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/30 10:14:05 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
 
-bool	usb_access(t_dongle *usb, t_coder *coder)
+static bool	usb_access(t_dongle *usb, t_coder *coder)
 {
 	if (usb->status == PLUGGED)
 		return (false);
@@ -56,21 +56,17 @@ void	lock_dongles_in_order(t_coder *coder)
 
 void	unlock_dongles(t_coder *coder)
 {
-	if (coder->usb_right)
-		pthread_cond_broadcast(&coder->usb_right->cond);
-	if (coder->usb_left)
-		pthread_cond_broadcast(&coder->usb_left->cond);
-	if (coder->usb_right)
-		pthread_mutex_unlock(&coder->usb_right->lock);
-	if (coder->usb_left)
-		pthread_mutex_unlock(&coder->usb_left->lock);
+	pthread_cond_broadcast(&coder->usb_right->cond);
+	pthread_cond_broadcast(&coder->usb_left->cond);
+	pthread_mutex_unlock(&coder->usb_right->lock);
+	pthread_mutex_unlock(&coder->usb_left->lock);
 }
 
 void	dongle_cooldown(t_coder *coder)
 {
 	long long			time;
 
-	time = timer(&coder->sim->start);
+	time = timer(coder->sim);
 	coder->usb_right->last_compile_time = time;
 	coder->usb_left->last_compile_time = time;
 	coder->usb_right->status = COOLING_DOWN;

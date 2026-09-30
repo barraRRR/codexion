@@ -6,24 +6,27 @@
 #    By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/08/17 11:38:13 by jbarreir          #+#    #+#              #
-#    Updated: 2026/09/24 09:59:13 by jbarreir         ###   ########.fr        #
+#    Updated: 2026/09/30 10:46:21 by jbarreir         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 NAME		= codexion
-CFLAGS		= -D_DEFAULT_SOURCE -std=c89 -Wall -Wextra -Werror -fsanitize=thread -g -pthread -I includes
+CFLAGS		= -D_DEFAULT_SOURCE -std=c89 -Wall -Wextra -Werror -pthread -I includes
 CC			= cc
 HEADER		= codexion.h
 
 SRC			=	src/main.c \
-				src/init/init.c \
-				src/init/threads.c \
-				src/init/memory.c \
-				src/init/start_sequence.c \
-				src/monitor/monitor.c \
-				src/core/solo_coder.c \
 				src/core/coder_routine.c \
+				src/core/coder_utils.c \
+				src/core/init_data.c \
 				src/core/dongle.c \
+				src/core/free_memory.c \
+				src/core/start_sequence.c \
+				src/monitor/monitor.c \
+				src/printer/printer.c \
+				src/printer/printer_utils.c \
+				src/pthreads/init_pthreads.c \
+				src/pthreads/destroy_pthreads.c \
 				src/scheduler/scheduler.c \
 				src/utils/utils.c \
 				src/utils/arg_parser.c \

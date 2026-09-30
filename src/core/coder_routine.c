@@ -6,13 +6,13 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/22 10:29:43 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/23 17:37:46 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/30 11:01:35 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
 
-void	lock_wait(t_coder *coder, t_dongle *left, t_dongle *right,
+static void	lock_wait(t_coder *coder, t_dongle *left, t_dongle *right,
 						t_status status)
 {
 	pthread_mutex_t		*available;
@@ -36,7 +36,7 @@ void	lock_wait(t_coder *coder, t_dongle *left, t_dongle *right,
 	lock_dongles_in_order(coder);
 }
 
-void	take_dongle(t_coder *coder)
+static t_status	take_dongles(t_coder *coder)
 {
 	t_status			available;
 
@@ -48,36 +48,28 @@ void	take_dongle(t_coder *coder)
 		{
 			lock_wait(coder, coder->usb_left, coder->usb_right, available);
 			available = both_usb_access(coder);
-			if (sim_lock_and_access(coder->sim, SHUTDOWN_SIGNAL, false)
+			if (sim_lock_and_access(coder->sim, SHUTDOWN, false)
 				|| am_i_burnt(coder))
-			{
-				unlock_dongles(coder);
-				pthread_mutex_unlock(&coder->lock);
-				return ;
-			}
+				return (exit_code_unlock(coder, SHUTDOWN, true));
 		}
 		coder->status = TAKING_DONGLE;
+		if (!append_log(coder))
+			return (exit_code_unlock(coder, MALLOC_ERR, true));
 		dequeue_dongles(coder);
-		print_log(coder, timer(&coder->sim->start), false);
-		print_log(coder, timer(&coder->sim->start), false);
 	}
 	unlock_dongles(coder);
 	pthread_mutex_unlock(&coder->lock);
+	return (SUCCESS);
 }
 
-void	compile_init(t_coder *coder)
+static t_status	compile_init(t_coder *coder)
 {
-	long long			time;
-
 	if (am_i_burnt(coder))
-	{
-		pthread_mutex_unlock(&coder->lock);
-		return ;
-	}
+		return (exit_code_unlock(coder, BURNOUT, false));
 	coder->status = COMPILING;
-	time = timer(&coder->sim->start);
-	coder->last_compile_start = time;
-	print_log(coder, timer(&coder->sim->start), false);
+	coder->last_compile_start = timer(coder->sim);
+	if (!append_log(coder))
+		return (exit_code_unlock(coder, MALLOC_ERR, false));
 	pthread_mutex_unlock(&coder->lock);
 	vigilant_sleep(coder, coder->sim->time_to_compile);
 	pthread_mutex_lock(&coder->lock);
@@ -90,61 +82,59 @@ void	compile_init(t_coder *coder)
 	pthread_mutex_unlock(&coder->lock);
 	dongle_cooldown(coder);
 	unlock_dongles(coder);
+	return (coder->status);
 }
 
-void	debug_and_refactor(t_coder *coder)
+static t_status	debug_ref(t_coder *coder)
 {
 	if (am_i_burnt(coder))
-	{
-		pthread_mutex_unlock(&coder->lock);
-		return ;
-	}
+		return (exit_code_unlock(coder, BURNOUT, false));
 	coder->status = DEBUGGING;
-	print_log(coder, timer(&coder->sim->start), false);
+	if (!append_log(coder))
+		return (exit_code_unlock(coder, MALLOC_ERR, false));
 	pthread_mutex_unlock(&coder->lock);
 	vigilant_sleep(coder, coder->sim->time_to_debug);
-	if (sim_lock_and_access(coder->sim, SHUTDOWN_SIGNAL, false))
-		return ;
+	if (sim_lock_and_access(coder->sim, SHUTDOWN, false))
+		return (SHUTDOWN);
 	pthread_mutex_lock(&coder->lock);
 	if (am_i_burnt(coder))
-	{
-		pthread_mutex_unlock(&coder->lock);
-		return ;
-	}
+		return (exit_code_unlock(coder, BURNOUT, false));
 	coder->status = REFACTORING;
-	print_log(coder, timer(&coder->sim->start), false);
+	if (!append_log(coder))
+		return (exit_code_unlock(coder, MALLOC_ERR, false));
 	pthread_mutex_unlock(&coder->lock);
 	vigilant_sleep(coder, coder->sim->time_to_refactor);
-	if (sim_lock_and_access(coder->sim, SHUTDOWN_SIGNAL, false))
-		return ;
+	if (sim_lock_and_access(coder->sim, SHUTDOWN, false))
+		return (SHUTDOWN);
 	have_i_finished(coder);
+	return (coder->status);
 }
 
 void	*quantum_compiler(void *arg)
 {
 	t_coder				*coder;
-	t_status			status;
+	t_status			s;
 
 	coder = (t_coder *)arg;
 	wait_for_start_sequence(coder->sim);
-	if (coder->sim->number_of_coders == 1)
+	if (coder->sim->n_coders == 1)
 		return (solo_coder(coder));
 	while (true)
 	{
 		if (!up_and_running(coder))
 			break ;
 		pthread_mutex_lock(&coder->lock);
-		status = coder->status;
-		if (status == BURNOUT || status == ALL_COMPILES_COMPLETED)
+		s = coder->status;
+		if (s == BURNOUT || s == ALL_COMPILES_COMPLETED)
 			return (exit_routine(coder));
-		if (status == CODER_INIT || status == REFACTORING_COMPLETED)
+		if (s == CODER_INIT || s == REFACTORING_COMPLETED)
 			enqueue_coder(coder);
-		else if (status == WAITING_DONGLE)
-			take_dongle(coder);
-		else if (status == TAKING_DONGLE)
-			compile_init(coder);
-		else if (status == COMPILING_COMPLETED)
-			debug_and_refactor(coder);
+		else if (s == WAITING_DONGLE && take_dongles(coder) == MALLOC_ERR)
+			return (NULL);
+		else if (s == TAKING_DONGLE && compile_init(coder) == MALLOC_ERR)
+			return (NULL);
+		else if (s == COMPILING_COMPLETED && debug_ref(coder) == MALLOC_ERR)
+			return (NULL);
 	}
 	return (NULL);
 }

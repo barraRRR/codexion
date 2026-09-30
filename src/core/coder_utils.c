@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/09/15 19:15:29 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/15 19:41:25 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/30 10:01:56 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,9 +19,9 @@ void	*solo_coder(t_coder *coder)
 	pthread_mutex_unlock(&coder->usb_right->lock);
 	pthread_mutex_lock(&coder->lock);
 	coder->status = TAKING_DONGLE;
-	print_log(coder, timer(&coder->sim->start), false);
+	printf("%lld %d has taken a dongle\n", timer(coder->sim), coder->id);
 	pthread_mutex_unlock(&coder->lock);
-	while (!sim_lock_and_access(coder->sim, SHUTDOWN_SIGNAL, false))
+	while (!sim_lock_and_access(coder->sim, SHUTDOWN, false))
 		usleep(SLEEP_INTERVAL);
 	return (NULL);
 }
@@ -30,4 +30,12 @@ void	*exit_routine(t_coder *coder)
 {
 	pthread_mutex_unlock(&coder->lock);
 	return (NULL);
+}
+
+t_status	exit_code_unlock(t_coder *coder, t_status status, bool dongles)
+{
+	if (dongles)
+		unlock_dongles(coder);
+	pthread_mutex_unlock(&coder->lock);
+	return (status);
 }
