@@ -38,7 +38,7 @@ static t_status	check_hub(t_simulation *sim, t_submonitor *sub)
 
 	i = sub->i_start - 1;
 	active = 0;
-	while (++i < sub->i_end)
+	while (++i <= sub->i_end)
 	{
 		update_cooldown(sim->quantum[i], sim);
 		status = check_coder(sim->hub[i]);
@@ -87,10 +87,10 @@ void	*submonitor_routine(void *arg)
 		sub->status = check_hub(sub->sim, sub);
 		if (sub->status == SHUTDOWN || sub->status == COMPLETION)
 		{
-			pthread_mutex_lock(&sub->lock);
+			pthread_mutex_unlock(&sub->lock);
 			break ;
 		}
-		pthread_mutex_lock(&sub->lock);
+		pthread_mutex_unlock(&sub->lock);
 		usleep(MONITOR_SLEEP);
 	}
 	return (NULL);
