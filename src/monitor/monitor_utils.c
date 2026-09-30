@@ -70,7 +70,7 @@ t_submonitor	**create_pool(t_simulation *sim)
 		else
 			pool[i]->i_end = chunk + MONITOR_CHUNK - 1;
 		chunk += MONITOR_CHUNK;
-		pool[i]->n_coders = pool[i]->i_end - pool[i]->i_start;
+		pool[i]->n_coders = pool[i]->i_end - pool[i]->i_start + 1;
 	}
 	pool[i] = NULL;
 	sim->monitor.n_sub = n_sub;

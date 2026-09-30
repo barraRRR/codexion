@@ -44,7 +44,7 @@ static t_status	check_hub(t_simulation *sim, t_submonitor *sub)
 		status = check_coder(sim->hub[i]);
 		if (status == BURNOUT || status == MALLOC_ERR)
 			return (SHUTDOWN);
-		if (status == COMPILING)
+		if (status != COMPLETION)
 			active++;
 	}
 	if (active == 0)
@@ -83,6 +83,8 @@ void	*submonitor_routine(void *arg)
 	wait_for_start_sequence(sub->sim);
 	while (true)
 	{
+		if (sim_lock_and_access(sub->sim, SHUTDOWN, false))
+			break ;
 		pthread_mutex_lock(&sub->lock);
 		sub->status = check_hub(sub->sim, sub);
 		if (sub->status == SHUTDOWN || sub->status == COMPLETION || sub->status == BURNOUT)
@@ -105,6 +107,8 @@ void	*monitor_routine(void *arg)
 	wait_for_start_sequence(mon->sim);
 	while (true)
 	{
+		if (sim_lock_and_access(mon->sim, SHUTDOWN, false))
+			break ;
 		s = check_pool(mon);
 		if (s == BURNOUT || s == COMPLETION)
 		{
