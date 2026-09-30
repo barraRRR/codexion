@@ -6,32 +6,53 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/09/28 16:59:58 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/29 12:55:43 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/30 13:04:28 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
 
-void	pthread_destroy_coder(t_coder *coder)
+void	pthread_destroy_hub(t_simulation *sim)
 {
-	if (coder->has_thread)
-		pthread_join(coder->thread, NULL);
-	if (coder->has_lock)
-		pthread_mutex_destroy(&coder->lock);
+	int					i;
+
+	i = -1;
+	while (++i < sim->n_coders_init && sim->hub && sim->hub[i])
+	{
+		if (sim->hub[i]->has_thread)
+			pthread_join(sim->hub[i]->thread, NULL);
+		if (sim->hub[i]->has_lock)
+			pthread_mutex_destroy(&sim->hub[i]->lock);
+	}
 }
 
-void	pthread_destroy_dongle(t_dongle *dongle)
+void	pthread_destroy_dongle(t_simulation *sim)
 {
-	if (dongle->has_lock)
-		pthread_mutex_destroy(&dongle->lock);
-	if (dongle->has_cond)
-		pthread_cond_destroy(&dongle->cond);
+	int					i;
+
+	i = -1;
+	while (++i < sim->n_dongles_init && sim->quantum && sim->quantum[i])
+	{
+		if (sim->quantum[i]->has_lock)
+			pthread_mutex_destroy(&sim->quantum[i]->lock);
+		if (sim->quantum[i]->has_cond)
+			pthread_cond_destroy(&sim->quantum[i]->cond);
+	}
 }
 
 void	pthread_destroy_monitor(t_monitor *monitor)
 {
+	int					i;
+
 	if (monitor->has_thread)
 		pthread_join(monitor->thread, NULL);
+	i = -1;
+	while (++i < monitor->n_sub)
+	{
+		pthread_join(monitor->pool[i]->thread, NULL);
+		if (monitor->pool[i]->has_lock)
+			pthread_mutex_destroy(&monitor->pool[i]->lock);
+	}
 }
 
 void	pthread_destroy_printer(t_printer *printer)

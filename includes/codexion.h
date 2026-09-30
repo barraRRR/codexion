@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/13 09:29:21 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/30 10:58:34 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/30 14:06:44 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,11 +29,13 @@
 # define MAX_CODERS 5000
 # define SLEEP_INTERVAL 1000
 # define MONITOR_SLEEP 1000
+# define MONITOR_CHUNK 30
 
 /* *** STATE MACHINE AND ERROR MESSAGES *** */
 typedef enum e_status
 {
 	SUCCESS,
+	WAITING,
 	PARSING_COMPLETED,
 	SCHED_ERR,
 	ARG_COUNT_ERR,
@@ -67,7 +69,7 @@ typedef enum e_status
 	DEBUGGING_COMPLETED,
 	REFACTORING,
 	REFACTORING_COMPLETED,
-	ALL_COMPILES_COMPLETED,
+	COMPLETION,
 	AVAILABLE,
 	AVAILABLE_LEFT,
 	AVAILABLE_RIGHT,
@@ -90,6 +92,7 @@ typedef enum e_status
 typedef struct s_dongle		t_dongle;
 typedef struct s_coder		t_coder;
 typedef struct s_monitor	t_monitor;
+typedef struct s_submonitor	t_submonitor;
 typedef struct s_log		t_log;
 typedef struct s_printer	t_printer;
 typedef struct s_simulation	t_simulation;
@@ -133,6 +136,22 @@ struct s_monitor
 	t_simulation			*sim;
 	pthread_t				thread;
 	bool					has_thread;
+	t_submonitor			**pool;
+	int						n_sub;
+};
+
+struct s_submonitor
+{
+	int						id;
+	int						i_start;
+	int						i_end;
+	t_monitor				*m;
+	t_simulation			*sim;
+	pthread_t				thread;
+	bool					has_thread;
+	pthread_mutex_t			lock;
+	bool					has_lock;
+	t_status				status;
 };
 
 struct s_log
@@ -196,6 +215,7 @@ int				print_err(int error_code, char *err, t_simulation *sim,
 t_status		exit_code_unlock(t_coder *coder, t_status status, bool dongles);
 
 void			init_sim_data(t_simulation *sim);
+t_submonitor	**create_pool(t_simulation *sim);
 
 void			*quantum_compiler(void *arg);
 void			vigilant_sleep(t_coder *coder, long long sleeping_time);
@@ -204,6 +224,7 @@ void			edf_scheduler(t_coder **queue, t_coder *coder);
 t_coder			*dequeue(t_coder **queue);
 void			enqueue_coder(t_coder *coder);
 void			*monitor_routine(void *arg);
+void			*submonitor_routine(void *arg);
 
 void			update_cooldown(t_dongle *usb, t_simulation *sim);
 t_status		both_usb_access(t_coder *coder);
@@ -211,6 +232,7 @@ void			lock_dongles_in_order(t_coder *coder);
 void			unlock_dongles(t_coder *coder);
 void			dongle_cooldown(t_coder *coder);
 void			dequeue_dongles(t_coder *coder);
+void			wake_dongles(t_monitor *monitor);
 
 void			wait_for_start_sequence(t_simulation *sim);
 void			start_sequence(t_simulation *sim);
@@ -230,8 +252,8 @@ void			*printer_routine(void *arg);
 bool			append_log(t_coder *coder);
 void			free_logs(t_printer *printer);
 
-void			pthread_destroy_coder(t_coder *coder);
-void			pthread_destroy_dongle(t_dongle *dongle);
+void			pthread_destroy_hub(t_simulation *sim);
+void			pthread_destroy_dongle(t_simulation *sim);
 void			pthread_destroy_monitor(t_monitor *monitor);
 void			pthread_destroy_printer(t_printer *printer);
 void			pthread_destroy_sim(t_simulation *sim);

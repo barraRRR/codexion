@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/19 13:09:10 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/30 09:56:04 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/30 12:53:49 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,6 +50,14 @@ t_status	init_threads(t_simulation *sim)
 	if (pthread_create(&sim->monitor.thread, NULL, monitor_routine,
 			&sim->monitor))
 		return (abort_start_sequence(sim, INIT_MONITOR_ERR));
+	i = -1;
+	while (++i < sim->monitor.n_sub)
+	{
+		if (pthread_create(&sim->monitor.pool[i]->thread, NULL, submonitor_routine,
+						   sim->monitor.pool[i]))
+			return (abort_start_sequence(sim, INIT_MONITOR_ERR));
+		sim->monitor.pool[i]->has_thread = true;
+	}
 	sim->monitor.has_thread = true;
 	if (pthread_create(&sim->printer.thread, NULL, printer_routine,
 			&sim->printer))
