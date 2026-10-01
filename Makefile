@@ -6,7 +6,7 @@
 #    By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/08/17 11:38:13 by jbarreir          #+#    #+#              #
-#    Updated: 2026/09/30 10:46:21 by jbarreir         ###   ########.fr        #
+#    Updated: 2026/09/30 13:56:49 by jbarreir         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -23,6 +23,7 @@ SRC			=	src/main.c \
 				src/core/free_memory.c \
 				src/core/start_sequence.c \
 				src/monitor/monitor.c \
+				src/monitor/monitor_utils.c \
 				src/printer/printer.c \
 				src/printer/printer_utils.c \
 				src/pthreads/init_pthreads.c \

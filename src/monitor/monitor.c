@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/20 14:52:04 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/30 11:01:54 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/10/01 10:38:19 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,10 +16,10 @@ static t_status	check_coder(t_coder *coder)
 {
 	t_status			status;
 
-	status = COMPILING;
 	pthread_mutex_lock(&coder->lock);
-	if (coder->status == ALL_COMPILES_COMPLETED)
-		status = ALL_COMPILES_COMPLETED;
+	status = coder->status;
+	if (coder->status == COMPLETION)
+		status = COMPLETION;
 	else if (coder->status == BURNOUT || am_i_burnt(coder))
 	{
 		status = BURNOUT;
@@ -30,57 +30,94 @@ static t_status	check_coder(t_coder *coder)
 	return (status);
 }
 
-static t_status	check_hub(t_simulation *sim)
+static t_status	check_hub(t_simulation *sim, t_submonitor *sub)
 {
 	int					i;
 	int					active;
 	t_status			status;
 
-	i = -1;
+	i = sub->i_start - 1;
 	active = 0;
-	while (++i < sim->n_coders)
+	while (++i <= sub->i_end)
 	{
 		update_cooldown(sim->quantum[i], sim);
 		status = check_coder(sim->hub[i]);
 		if (status == BURNOUT || status == MALLOC_ERR)
-			return (SHUTDOWN);
-		if (status == COMPILING)
+			return (status);
+		if (status != COMPLETION)
 			active++;
 	}
 	if (active == 0)
-		return (SHUTDOWN);
+		return (COMPLETION);
 	return (COMPILING);
 }
 
-static void	wake_dongles(t_monitor *monitor)
+static t_status	check_pool(t_monitor *mon)
 {
 	int					i;
+	int					completion;
+	t_status			status;
 
+	completion = 0;
 	i = -1;
-	while (++i < monitor->sim->n_coders)
+	while (++i < mon->n_sub)
 	{
-		pthread_mutex_lock(&monitor->sim->quantum[i]->lock);
-		pthread_cond_broadcast(&monitor->sim->quantum[i]->cond);
-		pthread_mutex_unlock(&monitor->sim->quantum[i]->lock);
+		pthread_mutex_lock(&mon->pool[i]->lock);
+		status = mon->pool[i]->status;
+		pthread_mutex_unlock(&mon->pool[i]->lock);
+		if (status == BURNOUT || status == MALLOC_ERR)
+			return (status);
+		if (status == COMPLETION)
+			completion++;
 	}
+	if (completion == mon->n_sub)
+		return (COMPLETION);
+	return (COMPILING);
+}
+
+void	*submonitor_routine(void *arg)
+{
+	t_submonitor		*sub;
+
+	sub = (t_submonitor *)arg;
+	wait_for_start_sequence(sub->sim);
+	while (true)
+	{
+		if (sim_lock_and_access(sub->sim, SHUTDOWN, false))
+			break ;
+		pthread_mutex_lock(&sub->lock);
+		sub->status = check_hub(sub->sim, sub);
+		if (sub->status == SHUTDOWN || sub->status == COMPLETION
+			|| sub->status == BURNOUT || sub->status == MALLOC_ERR)
+		{
+			pthread_mutex_unlock(&sub->lock);
+			break ;
+		}
+		pthread_mutex_unlock(&sub->lock);
+		usleep(MONITOR_SLEEP);
+	}
+	return (NULL);
 }
 
 void	*monitor_routine(void *arg)
 {
-	t_monitor			*monitor;
-	t_status			status;
+	t_monitor			*mon;
+	t_status			s;
 
-	monitor = (t_monitor *)arg;
-	wait_for_start_sequence(monitor->sim);
-	status = AVAILABLE;
-	while (status != SHUTDOWN)
+	mon = (t_monitor *)arg;
+	wait_for_start_sequence(mon->sim);
+	while (true)
 	{
-		status = check_hub(monitor->sim);
-		if (status == SHUTDOWN)
-			sim_lock_and_access(monitor->sim, status, true);
-		else
-			usleep(MONITOR_SLEEP);
+		if (sim_lock_and_access(mon->sim, SHUTDOWN, false))
+			break ;
+		s = check_pool(mon);
+		if (s == BURNOUT || s == COMPLETION || s == MALLOC_ERR)
+		{
+			sim_lock_and_access(mon->sim, SHUTDOWN, true);
+			break ;
+		}
+		usleep(MONITOR_SLEEP);
 	}
-	wake_dongles(monitor);
+	wake_dongles(mon);
 	return (NULL);
 }

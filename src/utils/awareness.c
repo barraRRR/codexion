@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/09/22 15:49:46 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/28 20:07:46 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/30 13:58:07 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,7 +40,7 @@ void	have_i_finished(t_coder *coder)
 	if (!am_i_burnt(coder))
 	{
 		if (completed >= required)
-			coder->status = ALL_COMPILES_COMPLETED;
+			coder->status = COMPLETION;
 		else
 			coder->status = REFACTORING_COMPLETED;
 	}

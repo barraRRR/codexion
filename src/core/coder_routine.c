@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/22 10:29:43 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/30 11:01:35 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/30 12:30:55 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -125,7 +125,7 @@ void	*quantum_compiler(void *arg)
 			break ;
 		pthread_mutex_lock(&coder->lock);
 		s = coder->status;
-		if (s == BURNOUT || s == ALL_COMPILES_COMPLETED)
+		if (s == BURNOUT || s == COMPLETION)
 			return (exit_routine(coder));
 		if (s == CODER_INIT || s == REFACTORING_COMPLETED)
 			enqueue_coder(coder);

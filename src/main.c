@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/13 09:29:04 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/30 09:53:14 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/09/30 14:07:00 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,9 @@ int	main(int argc, char **argv)
 		return (SUCCESS);
 	sim.status = init_coworking(&sim);
 	if (sim.status == MALLOC_ERR)
+		return (print_err(MALLOC_ERR, MALLOC_ERR_MSG, &sim, true));
+	sim.monitor.pool = create_pool(&sim);
+	if (!sim.monitor.pool)
 		return (print_err(MALLOC_ERR, MALLOC_ERR_MSG, &sim, true));
 	if (init_threads(&sim) != INIT_SIMULATION)
 		return (print_err(INIT_THREADS_ERR, THREAD_ERR_MSG, &sim, true));

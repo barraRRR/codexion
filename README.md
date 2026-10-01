@@ -132,7 +132,7 @@ Since `printf()` is a relatively slow function, we offload this responsibility t
 
 ## Limits
 
-`MAX_CODERS` is capped at `5,000`. Approaching `7,000` threads can cause test machines to fail due to the heavy overhead of concurrent POSIX threads. `parse_rules` rejects any `number_of_coders` outside the `[1, MAX_CODERS]` range with `MAX_COD_ERR` before the simulation starts.
+`MAX_CODERS` is capped at `1,024`. Approaching `2,000` threads cannot guarantee a `10ms` burnout detection threshold. Also, `7,000` threads can cause test machines to fail due to the heavy overhead of concurrent POSIX threads. `parse_rules` rejects any `number_of_coders` outside the `[1, MAX_CODERS]` range with `MAX_COD_ERR` before the simulation starts.
 
 ---
 
@@ -158,7 +158,7 @@ When a coder releases dongles or the monitor finishes their cooldown, `pthread_c
 
 ### Monitor-to-coder communication
 
-The monitor updates the shared simulation status to `SHUTDOWN_SIGNAL` under the simulation mutex. Coders check this state during their routine and while sleeping. When shutdown occurs, the monitor also broadcasts all dongle condition variables, ensuring that no thread remains blocked forever.
+The monitor and submonitor pool updates the shared simulation status to `SHUTDOWN_SIGNAL` under the simulation mutex. Coders check this state during their routine and while sleeping. When shutdown occurs, the monitor also broadcasts all dongle condition variables, ensuring that no thread remains blocked forever.
 
 ### Thread-safe asynchronous logging
 
