@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/19 13:09:10 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/30 12:53:49 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/10/01 10:57:49 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,33 +32,49 @@ static t_status	init_sim_pthread(t_simulation *sim)
 	return (INIT_SIMULATION);
 }
 
-t_status	init_threads(t_simulation *sim)
+static bool	init_quantum_compiler(t_simulation *sim)
 {
 	int					i;
 
-	sim->status = init_sim_pthread(sim);
-	if (sim->status != INIT_SIMULATION)
-		return (sim->status);
 	i = -1;
 	while (++i < sim->n_coders)
 	{
 		if (pthread_create(&sim->hub[i]->thread, NULL, quantum_compiler,
 				sim->hub[i]))
-			return (abort_start_sequence(sim, INIT_THREADS_ERR));
+			return (false);
 		sim->hub[i]->has_thread = true;
 	}
-	if (pthread_create(&sim->monitor.thread, NULL, monitor_routine,
-			&sim->monitor))
-		return (abort_start_sequence(sim, INIT_MONITOR_ERR));
+	return (true);
+}
+
+static bool	init_pool_routine(t_simulation *sim)
+{
+	int					i;
+
 	i = -1;
 	while (++i < sim->monitor.n_sub)
 	{
-		if (pthread_create(&sim->monitor.pool[i]->thread, NULL, submonitor_routine,
-						   sim->monitor.pool[i]))
-			return (abort_start_sequence(sim, INIT_MONITOR_ERR));
+		if (pthread_create(&sim->monitor.pool[i]->thread, NULL,
+				submonitor_routine, sim->monitor.pool[i]))
+			return (false);
 		sim->monitor.pool[i]->has_thread = true;
 	}
+	return (true);
+}
+
+t_status	init_threads(t_simulation *sim)
+{
+	sim->status = init_sim_pthread(sim);
+	if (sim->status != INIT_SIMULATION)
+		return (sim->status);
+	if (!init_quantum_compiler(sim))
+		return (abort_start_sequence(sim, INIT_THREADS_ERR));
+	if (pthread_create(&sim->monitor.thread, NULL, monitor_routine,
+			&sim->monitor))
+		return (abort_start_sequence(sim, INIT_MONITOR_ERR));
 	sim->monitor.has_thread = true;
+	if (!init_pool_routine(sim))
+		return (abort_start_sequence(sim, INIT_MONITOR_ERR));
 	if (pthread_create(&sim->printer.thread, NULL, printer_routine,
 			&sim->printer))
 		return (abort_start_sequence(sim, INIT_PRINTER_ERR));

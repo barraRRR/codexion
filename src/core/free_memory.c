@@ -6,21 +6,16 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/25 17:16:45 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/30 13:07:33 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/10/01 11:02:54 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
 
-t_status	free_all_memory(t_simulation *sim, t_status status)
+static void	free_heap(t_simulation *sim)
 {
 	int					i;
 
-	pthread_destroy_monitor(&sim->monitor);
-	pthread_destroy_hub(sim);
-	pthread_destroy_dongle(sim);
-	pthread_destroy_printer(&sim->printer);
-	pthread_destroy_sim(sim);
 	i = -1;
 	while (++i < sim->n_coders_init && sim->hub && sim->hub[i])
 		free(sim->hub[i]);
@@ -28,7 +23,8 @@ t_status	free_all_memory(t_simulation *sim, t_status status)
 	while (++i < sim->n_dongles_init && sim->quantum && sim->quantum[i])
 		free(sim->quantum[i]);
 	i = -1;
-	while (++i < sim->monitor.n_sub && sim->monitor.pool && sim->monitor.pool[i])
+	while (++i < sim->monitor.n_sub && sim->monitor.pool
+		&& sim->monitor.pool[i])
 		free(sim->monitor.pool[i]);
 	if (sim->hub)
 		free(sim->hub);
@@ -40,5 +36,15 @@ t_status	free_all_memory(t_simulation *sim, t_status status)
 		free(sim->monitor.pool);
 	sim->monitor.pool = NULL;
 	free_logs(&sim->printer);
+}
+
+t_status	free_all_memory(t_simulation *sim, t_status status)
+{
+	pthread_destroy_monitor(&sim->monitor);
+	pthread_destroy_hub(sim);
+	pthread_destroy_dongle(sim);
+	pthread_destroy_printer(&sim->printer);
+	pthread_destroy_sim(sim);
+	free_heap(sim);
 	return (status);
 }

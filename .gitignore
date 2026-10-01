@@ -10,3 +10,4 @@ log.txt
 codexion-eval-logs-*
 eval-logs
 logger.diff
+*.csv

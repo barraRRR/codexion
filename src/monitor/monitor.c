@@ -6,7 +6,7 @@
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/20 14:52:04 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/30 13:57:08 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/10/01 10:38:19 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -101,8 +101,8 @@ void	*submonitor_routine(void *arg)
 
 void	*monitor_routine(void *arg)
 {
-	t_monitor *mon;
-	t_status s;
+	t_monitor			*mon;
+	t_status			s;
 
 	mon = (t_monitor *)arg;
 	wait_for_start_sequence(mon->sim);
@@ -114,7 +114,7 @@ void	*monitor_routine(void *arg)
 		if (s == BURNOUT || s == COMPLETION || s == MALLOC_ERR)
 		{
 			sim_lock_and_access(mon->sim, SHUTDOWN, true);
-			break;
+			break ;
 		}
 		usleep(MONITOR_SLEEP);
 	}

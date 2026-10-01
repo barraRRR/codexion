@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   submonitor.c                                       :+:      :+:    :+:   */
+/*   monitor_utils.c                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: jbarreir <jbarreir@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/09/30 11:48:29 by jbarreir          #+#    #+#             */
-/*   Updated: 2026/09/30 13:56:19 by jbarreir         ###   ########.fr       */
+/*   Updated: 2026/10/01 10:49:04 by jbarreir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,6 +46,17 @@ static int	calculate_n_sub(t_simulation *sim)
 	return (result);
 }
 
+static void	sub_assignment(t_submonitor *sub, int *chunk, int n_coders)
+{
+	sub->i_start = *chunk;
+	if (*chunk + MONITOR_CHUNK > n_coders)
+		sub->i_end = n_coders - 1;
+	else
+		sub->i_end = *chunk + MONITOR_CHUNK - 1;
+	*chunk += MONITOR_CHUNK;
+	sub->n_coders = sub->i_end - sub->i_start + 1;
+}
+
 t_submonitor	**create_pool(t_simulation *sim)
 {
 	int					chunk;
@@ -64,13 +75,7 @@ t_submonitor	**create_pool(t_simulation *sim)
 		pool[i] = create_submonitor(&sim->monitor, i + 1);
 		if (!pool[i])
 			return (NULL);
-		pool[i]->i_start = chunk;
-		if (chunk + MONITOR_CHUNK > sim->n_coders)
-			pool[i]->i_end = sim->n_coders - 1;
-		else
-			pool[i]->i_end = chunk + MONITOR_CHUNK - 1;
-		chunk += MONITOR_CHUNK;
-		pool[i]->n_coders = pool[i]->i_end - pool[i]->i_start + 1;
+		sub_assignment(pool[i], &chunk, sim->n_coders);
 	}
 	pool[i] = NULL;
 	sim->monitor.n_sub = n_sub;
@@ -79,7 +84,7 @@ t_submonitor	**create_pool(t_simulation *sim)
 
 void	wake_dongles(t_monitor *monitor)
 {
-	int i;
+	int					i;
 
 	i = -1;
 	while (++i < monitor->sim->n_coders)
